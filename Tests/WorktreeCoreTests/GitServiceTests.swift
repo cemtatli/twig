@@ -60,4 +60,10 @@ final class GitServiceTests: XCTestCase {
         XCTAssertEqual(try GitService(runner: fake).branches(repoPath: "/repo"),
                        ["main", "develop", "feature"])
     }
+
+    func testPruneBuildsArgs() throws {
+        let fake = FakeProcessRunner()
+        try GitService(runner: fake).prune(repoPath: "/repo")
+        XCTAssertEqual(fake.calls.first?.args, ["-C", "/repo", "worktree", "prune"])
+    }
 }

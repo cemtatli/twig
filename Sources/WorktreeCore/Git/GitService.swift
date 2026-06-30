@@ -63,4 +63,9 @@ public struct GitService {
     public func deleteBranch(repoPath: String, branch: String) throws {
         try git(["-C", repoPath, "branch", "-D", branch])
     }
+
+    /// Drops registrations for worktrees whose directories no longer exist.
+    public func prune(repoPath: String) throws {
+        try git(["-C", repoPath, "worktree", "prune"])
+    }
 }

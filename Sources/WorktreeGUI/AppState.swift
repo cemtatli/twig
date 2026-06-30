@@ -35,9 +35,14 @@ final class AppState: ObservableObject {
                                              depth: config.scanDepth,
                                              manual: config.manualRepos)
             let git = GitService(runner: SystemProcessRunner())
+            let fm = FileManager.default
             var map: [String: [Worktree]] = [:]
             for repo in scanned {
-                map[repo.path] = (try? git.worktrees(repoPath: repo.path)) ?? []
+                try? git.prune(repoPath: repo.path)   // drop stale (deleted-folder) entries
+                let all = (try? git.worktrees(repoPath: repo.path)) ?? []
+                // Exclude the base repo's own checkout and any worktree whose
+                // directory no longer exists on disk.
+                map[repo.path] = all.filter { $0.path != repo.path && fm.fileExists(atPath: $0.path) }
             }
             await MainActor.run {
                 self?.repos = scanned
