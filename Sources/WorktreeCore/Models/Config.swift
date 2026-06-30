@@ -39,15 +39,39 @@ public struct Config: Codable, Equatable {
     public var manualRepos: [String]
     public var terminalApp: String
     public var editorApp: String
+    /// Command run in the terminal after opening a worktree (optional).
+    public var terminalStartupCommand: String
     public var repos: [String: RepoSettings]
     public var defaults: Defaults
 
     public init(scanRoots: [String], scanDepth: Int, manualRepos: [String],
                 terminalApp: String, editorApp: String,
+                terminalStartupCommand: String = "",
                 repos: [String: RepoSettings], defaults: Defaults) {
         self.scanRoots = scanRoots; self.scanDepth = scanDepth; self.manualRepos = manualRepos
         self.terminalApp = terminalApp; self.editorApp = editorApp
+        self.terminalStartupCommand = terminalStartupCommand
         self.repos = repos; self.defaults = defaults
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case scanRoots, scanDepth, manualRepos, terminalApp, editorApp
+        case terminalStartupCommand, repos, defaults
+    }
+
+    // Resilient decoding: a hand-edited or older config.json missing keys
+    // falls back to defaults instead of failing to load.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = Config.default
+        scanRoots = try c.decodeIfPresent([String].self, forKey: .scanRoots) ?? d.scanRoots
+        scanDepth = try c.decodeIfPresent(Int.self, forKey: .scanDepth) ?? d.scanDepth
+        manualRepos = try c.decodeIfPresent([String].self, forKey: .manualRepos) ?? []
+        terminalApp = try c.decodeIfPresent(String.self, forKey: .terminalApp) ?? d.terminalApp
+        editorApp = try c.decodeIfPresent(String.self, forKey: .editorApp) ?? d.editorApp
+        terminalStartupCommand = try c.decodeIfPresent(String.self, forKey: .terminalStartupCommand) ?? ""
+        repos = try c.decodeIfPresent([String: RepoSettings].self, forKey: .repos) ?? [:]
+        defaults = try c.decodeIfPresent(Defaults.self, forKey: .defaults) ?? d.defaults
     }
 
     public static let `default` = Config(
@@ -56,6 +80,7 @@ public struct Config: Codable, Equatable {
         manualRepos: [],
         terminalApp: "Terminal",
         editorApp: "Cursor",
+        terminalStartupCommand: "",
         repos: [:],
         defaults: Defaults(worktreePath: "{group}/task/{type}/{taskName}", defaultBase: "main")
     )

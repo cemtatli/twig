@@ -7,7 +7,7 @@ import WorktreeCore
 struct SettingsView: View {
     @EnvironmentObject var state: AppState
 
-    private let terminals = ["Terminal", "iTerm", "Warp", "Ghostty", "kitty", "Alacritty"]
+    private let terminals = ["Terminal", "iTerm", "Warp", "Ghostty", "kitty", "Alacritty", "cmux"]
     private let editors = ["Cursor", "Visual Studio Code", "Zed", "Sublime Text", "Nova", "Xcode"]
 
     var body: some View {
@@ -50,6 +50,15 @@ struct SettingsView: View {
                         ForEach(options(state.config.editorApp, editors), id: \.self) { Text($0).tag($0) }
                     }
                     .labelsHidden()
+                }
+
+                section("Terminal Başlangıç Komutu", "Terminal açılınca worktree'de çalışır (opsiyonel). Enter ile kaydet.") {
+                    TextField("ör. npm run dev", text: Binding(
+                        get: { state.config.terminalStartupCommand },
+                        set: { state.config.terminalStartupCommand = $0 }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { state.saveConfig() }
                 }
 
                 Divider()

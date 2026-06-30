@@ -14,6 +14,23 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: path))
     }
 
+    func testLoadJSONMissingKeysFallsBackToDefaults() throws {
+        let path = tempPath()
+        // An older/hand-edited config missing several keys (incl. the newer
+        // terminalStartupCommand) must still load with sensible defaults.
+        try """
+        { "scanRoots": ["~/work"], "editorApp": "Zed" }
+        """.write(toFile: path, atomically: true, encoding: .utf8)
+        let config = try ConfigStore(path: path).load()
+        XCTAssertEqual(config.scanRoots, ["~/work"])
+        XCTAssertEqual(config.editorApp, "Zed")
+        XCTAssertEqual(config.scanDepth, Config.default.scanDepth)       // defaulted
+        XCTAssertEqual(config.terminalApp, Config.default.terminalApp)   // defaulted
+        XCTAssertEqual(config.terminalStartupCommand, "")               // defaulted
+        XCTAssertEqual(config.manualRepos, [])
+        XCTAssertEqual(config.defaults, Config.default.defaults)
+    }
+
     func testSaveThenLoadRoundTrips() throws {
         let path = tempPath()
         let store = ConfigStore(path: path)

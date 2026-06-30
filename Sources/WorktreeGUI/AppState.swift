@@ -121,7 +121,10 @@ final class AppState: ObservableObject {
     }
 
     func openEditor(_ path: String) { try? launcher.openInEditor(config.editorApp, path: path) }
-    func openTerminal(_ path: String) { try? launcher.openInTerminal(config.terminalApp, path: path) }
+    func openTerminal(_ path: String) {
+        try? launcher.openInTerminal(config.terminalApp, path: path,
+                                     startupCommand: config.terminalStartupCommand)
+    }
     func openFinder(_ path: String) { try? launcher.openInFinder(path: path) }
 
     func saveConfig() { try? store.save(config); refresh() }

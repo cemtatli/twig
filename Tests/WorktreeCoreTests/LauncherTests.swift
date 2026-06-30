@@ -15,6 +15,28 @@ final class LauncherTests: XCTestCase {
         XCTAssertEqual(fake.calls.first?.args, ["-a", "iTerm", "/wt/x"])
     }
 
+    func testOpenInTerminalWithStartupCommandOpensScript() throws {
+        let fake = FakeProcessRunner()
+        let wt = NSTemporaryDirectory() + "wt-\(UUID().uuidString)"
+        try Launcher(runner: fake).openInTerminal("cmux", path: wt, startupCommand: "npm run dev")
+        let call = try XCTUnwrap(fake.calls.first)
+        XCTAssertEqual(call.executable, "open")
+        XCTAssertEqual(call.args.count, 3)
+        XCTAssertEqual(call.args[0], "-a")
+        XCTAssertEqual(call.args[1], "cmux")
+        let scriptPath = call.args[2]
+        XCTAssertTrue(scriptPath.hasSuffix(".command"))
+        let contents = try String(contentsOfFile: scriptPath, encoding: .utf8)
+        XCTAssertTrue(contents.contains("npm run dev"))
+        XCTAssertTrue(contents.contains("cd '\(wt)'"))
+    }
+
+    func testOpenInTerminalEmptyCommandJustOpensPath() throws {
+        let fake = FakeProcessRunner()
+        try Launcher(runner: fake).openInTerminal("Terminal", path: "/wt/x", startupCommand: "   ")
+        XCTAssertEqual(fake.calls.first?.args, ["-a", "Terminal", "/wt/x"])
+    }
+
     func testOpenInFinder() throws {
         let fake = FakeProcessRunner()
         try Launcher(runner: fake).openInFinder(path: "/wt/x")
