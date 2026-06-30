@@ -48,7 +48,7 @@ final class SetupRunnerTests: XCTestCase {
                      value: "https://{taskName}.dev.example.com/api")],
             baseRepoPath: base, worktreePath: wt, resolver: resolver)
         let written = try String(contentsOfFile: wt + "/.env.development", encoding: .utf8)
-        XCTAssertEqual(written, "\nVITE_API_URL=https://randevu.dev.example.com/api\n")
+        XCTAssertEqual(written, "VITE_API_URL=https://randevu.dev.example.com/api\n")
     }
 
     func testRunCommandsExecutesInWorktreeViaShell() throws {
@@ -69,5 +69,10 @@ final class SetupRunnerTests: XCTestCase {
             resolver: PlaceholderResolver(values: [:]), progress: { _ in })) { error in
             XCTAssertEqual(error as? SetupError, .command(command: "bad", exitCode: 1, stderr: "boom"))
         }
+    }
+
+    func testUpdateEnvLineOnEmptyContentHasNoLeadingNewline() {
+        let updated = SetupRunner.updateEnvLine(content: "", key: "VITE_API_URL", value: "x")
+        XCTAssertEqual(updated, "VITE_API_URL=x\n")
     }
 }

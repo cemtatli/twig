@@ -14,7 +14,7 @@ public struct SetupRunner {
 
     public static func updateEnvLine(content: String, key: String, value: String) -> String {
         let hadTrailingNewline = content.hasSuffix("\n")
-        var lines = content.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var lines = content.isEmpty ? [] : content.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         if hadTrailingNewline, lines.last == "" { lines.removeLast() }
 
         var replaced = false
