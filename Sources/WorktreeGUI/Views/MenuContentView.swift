@@ -97,11 +97,14 @@ struct MenuContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            Text(state.t(.sidebarRepos))
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Theme.textTertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 6)
+            HStack(spacing: 6) {
+                BrandBracket(size: 9)
+                Text(state.t(.sidebarRepos))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 6)
 
             ScrollView {
                 VStack(spacing: 2) {
@@ -166,6 +169,12 @@ struct MenuContentView: View {
                     .fill(isSelected ? Theme.accent.opacity(0.16)
                           : isHovered ? Theme.hover : .clear)
             )
+            .overlay(alignment: .leading) {
+                if isSelected {
+                    AccentSpine().padding(.vertical, 4)
+                        .transition(.opacity)
+                }
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -311,6 +320,11 @@ struct MenuContentView: View {
             RoundedRectangle(cornerRadius: Theme.rRow, style: .continuous)
                 .fill(hovered ? Theme.hover : .clear)
         )
+        .overlay(alignment: .leading) {
+            if hovered {
+                AccentSpine().padding(.vertical, 4).transition(.opacity)
+            }
+        }
         .contentShape(Rectangle())
         .onHover { hovering in hoveredPath = hovering ? wt.path : (hovered ? nil : hoveredPath) }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: hovered)
