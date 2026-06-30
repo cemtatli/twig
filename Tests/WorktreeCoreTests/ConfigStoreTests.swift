@@ -53,4 +53,16 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(Config.expandTilde("~/Dev"), home + "/Dev")
         XCTAssertEqual(Config.expandTilde("/abs/path"), "/abs/path")
     }
+
+    func testLanguageDefaultsToEnglishWhenMissing() throws {
+        let json = #"{"scanRoots":["~/Dev"]}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertEqual(config.language, "en")
+    }
+
+    func testLanguageDecodesWhenPresent() throws {
+        let json = #"{"language":"tr"}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertEqual(config.language, "tr")
+    }
 }

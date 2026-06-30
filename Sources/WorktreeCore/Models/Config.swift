@@ -59,22 +59,24 @@ public struct Config: Codable, Equatable {
     public var editorApp: String
     /// Command run in the terminal after opening a worktree (optional).
     public var terminalStartupCommand: String
+    public var language: String
     public var repos: [String: RepoSettings]
     public var defaults: Defaults
 
     public init(scanRoots: [String], scanDepth: Int, manualRepos: [String],
                 terminalApp: String, editorApp: String,
-                terminalStartupCommand: String = "",
+                terminalStartupCommand: String = "", language: String = "en",
                 repos: [String: RepoSettings], defaults: Defaults) {
         self.scanRoots = scanRoots; self.scanDepth = scanDepth; self.manualRepos = manualRepos
         self.terminalApp = terminalApp; self.editorApp = editorApp
         self.terminalStartupCommand = terminalStartupCommand
+        self.language = language
         self.repos = repos; self.defaults = defaults
     }
 
     private enum CodingKeys: String, CodingKey {
         case scanRoots, scanDepth, manualRepos, terminalApp, editorApp
-        case terminalStartupCommand, repos, defaults
+        case terminalStartupCommand, language, repos, defaults
     }
 
     // Resilient decoding: a hand-edited or older config.json missing keys
@@ -88,6 +90,7 @@ public struct Config: Codable, Equatable {
         terminalApp = try c.decodeIfPresent(String.self, forKey: .terminalApp) ?? d.terminalApp
         editorApp = try c.decodeIfPresent(String.self, forKey: .editorApp) ?? d.editorApp
         terminalStartupCommand = try c.decodeIfPresent(String.self, forKey: .terminalStartupCommand) ?? ""
+        language = try c.decodeIfPresent(String.self, forKey: .language) ?? "en"
         repos = try c.decodeIfPresent([String: RepoSettings].self, forKey: .repos) ?? [:]
         defaults = try c.decodeIfPresent(Defaults.self, forKey: .defaults) ?? d.defaults
     }
@@ -99,6 +102,7 @@ public struct Config: Codable, Equatable {
         terminalApp: "Terminal",
         editorApp: "Cursor",
         terminalStartupCommand: "",
+        language: "en",
         repos: [:],
         defaults: Defaults(worktreePath: "{group}/task/{type}-{taskName}", defaultBase: "main")
     )
