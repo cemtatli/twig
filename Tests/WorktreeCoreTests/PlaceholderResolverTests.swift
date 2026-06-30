@@ -21,6 +21,13 @@ final class PlaceholderResolverTests: XCTestCase {
         }
     }
 
+    func testEmptyTokenThrows() {
+        let r = PlaceholderResolver(values: [:])
+        XCTAssertThrowsError(try r.resolve("{}")) { error in
+            XCTAssertEqual(error as? PlaceholderError, .unresolved(""))
+        }
+    }
+
     func testNoTokensReturnsInput() throws {
         let r = PlaceholderResolver(values: [:])
         XCTAssertEqual(try r.resolve("plain"), "plain")

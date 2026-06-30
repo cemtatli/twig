@@ -5,7 +5,7 @@ public enum PlaceholderError: Error, Equatable {
 }
 
 public struct PlaceholderResolver {
-    private let values: [String: String]
+    let values: [String: String]
 
     public init(values: [String: String]) { self.values = values }
 
