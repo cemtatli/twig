@@ -19,8 +19,8 @@ enum Theme {
     static let textTertiary  = Color(nsColor: .tertiaryLabelColor)
 
     // MARK: Fills + lines
-    static let hover    = Color.primary.opacity(0.06)
-    static let selected = Color.primary.opacity(0.10)
+    static let hover    = Brand.tintHover
+    static let selected = Brand.tintSelected
     static let hairline = Color(nsColor: .separatorColor)
 
     // MARK: Corner radii (continuous, like AppKit controls)
@@ -38,8 +38,19 @@ enum Theme {
 /// Jig brand tokens. The one signal color over the native graphite/vibrancy
 /// surface; everything else stays semantic + system.
 enum Brand {
-    /// #FF6A1A — the single brand accent. Primary fills, selection, positive state.
+    /// #FF6A1A — the single brand accent.
     static let signalOrange = Color(red: 1.0, green: 0.416, blue: 0.102)
+    /// #DB4D0D — deeper orange, used only as the bottom of the primary gradient.
+    static let signalDeep   = Color(red: 0.859, green: 0.302, blue: 0.051)
+    /// Accent-tinted interaction fills over vibrancy (replace the old gray opacities).
+    static let tintHover    = signalOrange.opacity(0.10)
+    static let tintSelected = signalOrange.opacity(0.16)
+    /// The selected-row spine color.
+    static let spine        = signalOrange
+    /// Primary-button fill — a subtle vertical orange gradient.
+    static let accentGradient = LinearGradient(
+        colors: [signalOrange, signalDeep],
+        startPoint: .top, endPoint: .bottom)
 }
 
 // MARK: - Vibrancy
@@ -77,7 +88,8 @@ struct AccentPill: ButtonStyle {
             .padding(.horizontal, 13).padding(.vertical, 6)
             .background(
                 RoundedRectangle(cornerRadius: Theme.rControl, style: .continuous)
-                    .fill(Theme.accent.opacity(configuration.isPressed ? 0.82 : 1))
+                    .fill(Brand.accentGradient)
+                    .opacity(configuration.isPressed ? 0.82 : 1)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.snappy(duration: 0.12), value: configuration.isPressed)
@@ -203,5 +215,31 @@ struct GhostPill: ButtonStyle {
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.snappy(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Brand motifs
+
+/// A 3pt accent bar marking a selected row's leading edge — the signature motif.
+struct AccentSpine: View {
+    var body: some View {
+        Capsule(style: .continuous)
+            .fill(Brand.spine)
+            .frame(width: 3)
+            .frame(maxHeight: .infinity)
+    }
+}
+
+/// The Jig right-angle bracket mark, for section headers and empty states.
+struct BrandBracket: View {
+    var size: CGFloat = 11
+    var body: some View {
+        Path { p in
+            p.move(to: CGPoint(x: 0, y: size))
+            p.addLine(to: CGPoint(x: 0, y: 0))
+            p.addLine(to: CGPoint(x: size, y: 0))
+        }
+        .stroke(Brand.signalOrange, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+        .frame(width: size, height: size)
     }
 }
