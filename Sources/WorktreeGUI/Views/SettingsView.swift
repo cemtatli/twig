@@ -164,7 +164,7 @@ struct SettingsView: View {
     private func sourceRow(_ path: String, kind: String, isRepo: Bool) -> some View {
         HStack(spacing: 8) {
             Image(systemName: isRepo ? "shippingbox" : "folder")
-                .font(.system(size: 11)).foregroundStyle(Theme.textSecondary).frame(width: 14)
+                .font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.textSecondary).frame(width: 14)
             Text(path.abbreviatingHome).font(Theme.mono(10.5))
                 .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
             Text(kind).font(.system(size: 9, weight: .medium)).foregroundStyle(Theme.textTertiary)
@@ -183,7 +183,7 @@ struct SettingsView: View {
     private func packageManagerRow(_ repo: Repo) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "shippingbox")
-                .font(.system(size: 11)).foregroundStyle(Theme.textSecondary).frame(width: 14)
+                .font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.textSecondary).frame(width: 14)
             Text(repo.name).font(.system(size: 12))
                 .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
             Spacer()
