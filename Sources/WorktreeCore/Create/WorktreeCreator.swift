@@ -51,12 +51,15 @@ public struct WorktreeCreator {
                             branch: req.branch, newBranchBase: req.newBranchBase)
 
         let repoSettings = settings(for: req.repo)
-        if let rules = repoSettings?.envRules, !rules.isEmpty {
+        // Repo-specific rules win; otherwise fall back to the global defaults.
+        let rules = repoSettings?.envRules ?? config.defaults.envRules ?? []
+        if !rules.isEmpty {
             progress("applying env rules")
             try setup.applyEnvRules(rules, baseRepoPath: req.repo.path,
                                     worktreePath: path, resolver: resolver)
         }
-        if let commands = repoSettings?.setupCommands, !commands.isEmpty {
+        let commands = repoSettings?.setupCommands ?? config.defaults.setupCommands ?? []
+        if !commands.isEmpty {
             try setup.runCommands(commands, worktreePath: path, resolver: resolver, progress: progress)
         }
         return Worktree(path: path, branch: req.branch)

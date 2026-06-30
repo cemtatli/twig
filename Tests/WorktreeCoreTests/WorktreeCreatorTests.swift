@@ -65,6 +65,27 @@ final class WorktreeCreatorTests: XCTestCase {
         XCTAssertEqual(setupFake.calls.first?.args, ["-c", "npm install"])
     }
 
+    func testCreateUsesDefaultEnvRulesWhenRepoHasNone() throws {
+        var config = Config.default
+        config.defaults.envRules = [EnvRule(file: ".env.development", key: "VITE_API_URL",
+                                            value: "https://{type}-{taskName}.dev.example.com/api")]
+        // Repo NOT in config.repos -> type derived from name, defaults apply.
+        let repo = Repo(path: "/Users/example/Dev/example_repos/example-ekurs", name: "example-ekurs", group: "example_repos")
+        let req = WorktreeRequest(repo: repo, branch: "x", taskName: "demo", newBranchBase: nil)
+
+        let wtPath = "/Users/example/Dev/example_repos/task/ekurs-demo"
+        try FileManager.default.createDirectory(atPath: wtPath, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(atPath: wtPath) }
+
+        let creator = WorktreeCreator(config: config,
+                                      git: GitService(runner: FakeProcessRunner()),
+                                      setup: SetupRunner(runner: FakeProcessRunner()))
+        _ = try creator.create(req, progress: { _ in })
+
+        let written = try String(contentsOfFile: wtPath + "/.env.development", encoding: .utf8)
+        XCTAssertEqual(written, "VITE_API_URL=https://ekurs-demo.dev.example.com/api\n")
+    }
+
     func testCreateHaltsWhenGitFails() {
         let gitFake = FakeProcessRunner()
         gitFake.results = [ProcessResult(exitCode: 128, stdout: "", stderr: "fatal")]

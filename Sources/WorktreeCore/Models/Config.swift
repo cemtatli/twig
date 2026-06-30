@@ -27,9 +27,14 @@ public struct RepoSettings: Codable, Equatable {
 public struct Defaults: Codable, Equatable {
     public var worktreePath: String
     public var defaultBase: String
+    /// Applied to any repo without its own envRules/setupCommands.
+    public var envRules: [EnvRule]?
+    public var setupCommands: [String]?
 
-    public init(worktreePath: String, defaultBase: String) {
+    public init(worktreePath: String, defaultBase: String,
+                envRules: [EnvRule]? = nil, setupCommands: [String]? = nil) {
         self.worktreePath = worktreePath; self.defaultBase = defaultBase
+        self.envRules = envRules; self.setupCommands = setupCommands
     }
 }
 
