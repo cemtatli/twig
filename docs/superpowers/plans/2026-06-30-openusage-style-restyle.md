@@ -782,7 +782,170 @@ git commit -m "feat: restyle Settings pane — canvas cards, LiquidTabs pickers"
 
 ---
 
-### Task 7: Full-suite regression check + final manual pass
+### Task 7: Settings card tonal depth (addendum Fix A)
+
+**Files:**
+- Modify: `Sources/WorktreeGUI/Theme.swift` (add a token after `canvas`, around line 28)
+- Modify: `Sources/WorktreeGUI/Views/SettingsView.swift:151-154` (the `section(_:_:content:)` card background)
+
+**Interfaces:**
+- Consumes: nothing new.
+- Produces: `Theme.surfaceRaised: Color` — consumed only by `SettingsView`'s
+  card background in this task. (Not reused by Task 8 — rail badges get
+  their own per-repo colors, not this neutral token.)
+
+- [ ] **Step 1: Add the token**
+
+In `Sources/WorktreeGUI/Theme.swift`, immediately after the existing line
+
+```swift
+    static let canvas = Color(red: 0.05, green: 0.05, blue: 0.055)
+```
+
+add:
+
+```swift
+
+    /// One step lighter than `canvas` — gives cards/rows visible separation
+    /// from the page behind them instead of sitting at the identical tone.
+    static let surfaceRaised = Color(red: 0.11, green: 0.11, blue: 0.12)
+```
+
+- [ ] **Step 2: Use it in the Settings card background**
+
+In `Sources/WorktreeGUI/Views/SettingsView.swift`, replace:
+
+```swift
+            content()
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Theme.canvas)
+                )
+```
+
+with:
+
+```swift
+            content()
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Theme.surfaceRaised)
+                )
+```
+
+- [ ] **Step 3: Build and verify**
+
+Run: `swift build` — must succeed.
+Run: `swift test` — all 55 tests must still pass.
+Run: `./scripts/build-app.sh` — must package successfully.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add Sources/WorktreeGUI/Theme.swift Sources/WorktreeGUI/Views/SettingsView.swift
+git commit -m "feat: tonal depth for Settings cards (Theme.surfaceRaised)"
+```
+
+---
+
+### Task 8: Per-repo rail avatar color (addendum Fix B)
+
+**Files:**
+- Modify: `Sources/WorktreeGUI/Theme.swift` (add a palette + hash function, near the bottom of `enum Theme`, after the `mono(_:_:)` function)
+- Modify: `Sources/WorktreeGUI/Views/MenuContentView.swift:130, 135` (the `repoRow` badge fill and initial text color)
+
+**Interfaces:**
+- Consumes: nothing new.
+- Produces: `Theme.avatarColor(for:) -> Color` — consumed only by `repoRow`'s
+  unselected badge fill in this task.
+
+- [ ] **Step 1: Add the palette + deterministic hash to `Theme.swift`**
+
+In `Sources/WorktreeGUI/Theme.swift`, inside `enum Theme`, immediately before
+the closing brace of the enum (after the existing `mono(_:_:)` static
+function), add:
+
+```swift
+
+    // MARK: Rail avatar palette — deterministic per-repo hue, distinct from
+    // `accent` so an unselected badge's color is never mistaken for the
+    // selected-state signal.
+    static let avatarPalette: [Color] = [
+        Color(nsColor: .systemBlue),
+        Color(nsColor: .systemTeal),
+        Color(nsColor: .systemIndigo),
+        Color(nsColor: .systemPurple),
+        Color(nsColor: .systemPink),
+        Color(nsColor: .systemMint),
+    ]
+
+    /// Stable per-repo color hashed from the repo name. Deliberately not
+    /// `String.hashValue` — that's randomized per process, so the same repo
+    /// would get a different color on every relaunch. djb2 over UTF8 bytes
+    /// is deterministic across runs.
+    static func avatarColor(for name: String) -> Color {
+        var hash: UInt64 = 5381
+        for byte in name.utf8 { hash = ((hash << 5) &+ hash) &+ UInt64(byte) }
+        let index = Int(hash % UInt64(avatarPalette.count))
+        return avatarPalette[index].opacity(0.55)
+    }
+```
+
+- [ ] **Step 2: Use it in `repoRow`**
+
+In `Sources/WorktreeGUI/Views/MenuContentView.swift`, inside `repoRow(_:index:)`,
+replace:
+
+```swift
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isSelected ? Theme.accent : Color.primary.opacity(0.08))
+                .frame(width: 36, height: 36)
+                .overlay {
+                    Text(initial)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(isSelected ? .white : Theme.textSecondary)
+                }
+```
+
+with:
+
+```swift
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isSelected ? Theme.accent : Theme.avatarColor(for: repo.name))
+                .frame(width: 36, height: 36)
+                .overlay {
+                    Text(initial)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(isSelected ? .white : .white.opacity(0.85))
+                }
+```
+
+(Text goes from `Theme.textSecondary` to `.white.opacity(0.85)` because the
+badge background is no longer a uniform near-black gray — it's now one of
+six saturated hues at 55% opacity, and a gray label doesn't read reliably
+against all six. White-at-reduced-opacity does, while still staying clearly
+less prominent than the full-white selected-state label.)
+
+- [ ] **Step 3: Build and verify**
+
+Run: `swift build` — must succeed.
+Run: `swift test` — all 55 tests must still pass.
+Run: `./scripts/build-app.sh` — must package successfully.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add Sources/WorktreeGUI/Theme.swift Sources/WorktreeGUI/Views/MenuContentView.swift
+git commit -m "feat: deterministic per-repo color for rail avatar badges"
+```
+
+---
+
+### Task 9: Full-suite regression check + final manual pass
 
 **Files:** none (verification only)
 
@@ -801,15 +964,19 @@ Expected: succeeds, produces `WorktreeGUI.app` in the project root.
 - [ ] **Step 3: Manual walkthrough**
 
 Launch the app, open the menubar popover, and confirm against the spec
-(`docs/superpowers/specs/2026-06-30-openusage-style-restyle-design.md`):
+(`docs/superpowers/specs/2026-06-30-openusage-style-restyle-design.md`,
+including the 2026-06-30 addendum):
 - Near-black canvas on both sidebar and detail panes (no vibrancy/desktop
   show-through).
 - Sidebar is a narrow icon rail; 1-9 keyboard shortcuts still work; hover
   tooltips show full repo name + group.
+- Rail badges: repos with the same first letter (e.g. the user's
+  `example-admin`/`example-individual`/`example-student`/`ekurs`) now show visibly
+  different colors, not identical gray squares.
+- Settings pane: cards are visibly lighter than the page background (not
+  the same flat black), white pill tabs for Language and Scan Depth.
 - Worktree rows show a green/red status dot reflecting actual git dirty
   state (verify by editing a file in one worktree and refreshing).
-- Settings pane: canvas-filled section cards, white pill tabs for Language
-  and Scan Depth.
 - New Worktree form's tabs are unchanged (still orange).
 
 - [ ] **Step 4: Report results to the user — no commit (verification only)**
