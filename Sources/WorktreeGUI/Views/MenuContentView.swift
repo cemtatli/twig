@@ -338,6 +338,9 @@ struct MenuContentView: View {
     private var emptyState: some View {
         VStack(spacing: 10) {
             JigWordmark(size: 22)
+            Text(state.t(.tagline))
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.textTertiary)
             Text(state.t(.noRepositories)).font(.system(size: 13, weight: .medium))
                 .foregroundStyle(Theme.textSecondary)
             if state.isRefreshing {

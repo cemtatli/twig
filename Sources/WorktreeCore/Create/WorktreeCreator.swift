@@ -55,7 +55,7 @@ public struct WorktreeCreator {
             if git.fetch(repoPath: req.repo.path, branch: b),
                git.hasRef(repoPath: req.repo.path, ref: "origin/\(b)") {
                 base = "origin/\(b)"
-                progress("base güncellendi → origin/\(b)")
+                progress("base updated → origin/\(b)")
             }
         }
 

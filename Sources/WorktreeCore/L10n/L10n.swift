@@ -26,6 +26,8 @@ public enum L10nKey: String, CaseIterable {
     case editConfigHint, pmNone, remove, languageTitle, languageCaption
     // Add-source panel
     case addPanelPrompt, addPanelMessage
+    // Brand
+    case tagline
 }
 
 public enum L10n {
@@ -74,6 +76,7 @@ public enum L10n {
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
             .addPanelMessage: "Pick a repo folder or a root folder containing repos",
+            .tagline: "Spin up a worktree.",
         ],
         .tr: [
             .sidebarRepos: "Depolar", .addRepo: "Repo ekle", .settings: "Ayarlar",
@@ -109,6 +112,7 @@ public enum L10n {
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",
             .addPanelMessage: "Bir repo klasörü ya da repoları içeren bir kök klasör seç",
+            .tagline: "Bir worktree başlat.",
         ],
     ]
 }

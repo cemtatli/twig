@@ -11,6 +11,7 @@ struct WorktreeGUIApp: App {
                 .preferredColorScheme(.dark)
         } label: {
             Image(nsImage: JigGlyph.menuBarImage())
+                .accessibilityLabel("Jig")
         }
         .menuBarExtraStyle(.window)
     }
