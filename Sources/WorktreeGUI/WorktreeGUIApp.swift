@@ -10,6 +10,18 @@ struct WorktreeGUIApp: App {
             MenuContentView().environmentObject(state)
         }
         .menuBarExtraStyle(.window)
+
+        // Real windows (not sheets) — the MenuBarExtra popover is transient and
+        // dismisses on focus loss, which breaks sheets and keyboard text entry.
+        Window("Ayarlar", id: "settings") {
+            SettingsView().environmentObject(state)
+        }
+        .windowResizability(.contentSize)
+
+        Window("Yeni Worktree", id: "new-worktree") {
+            NewWorktreeView().environmentObject(state)
+        }
+        .windowResizability(.contentSize)
     }
 }
 

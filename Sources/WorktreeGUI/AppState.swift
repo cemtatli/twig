@@ -10,6 +10,7 @@ final class AppState: ObservableObject {
     @Published var log: [String] = []
     @Published var lastError: String?
     @Published var isRefreshing = false
+    @Published var newWorktreeRepoPath: String?   // repo to show in the New Worktree window
 
     private let store: ConfigStore
     private let runner: ProcessRunner = SystemProcessRunner()

@@ -3,10 +3,13 @@ import WorktreeCore
 
 struct MenuContentView: View {
     @EnvironmentObject var state: AppState
-    @State private var newWorktreeRepo: Repo?
-    @State private var showSettings = false
-    @State private var pendingRemoval: (repo: Repo, worktree: Worktree)?
-    @State private var showRemoveDialog = false
+    @Environment(\.openWindow) private var openWindow
+    @State private var confirmingRemovalPath: String?
+
+    private func openInFront(id: String) {
+        openWindow(id: id)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -14,7 +17,7 @@ struct MenuContentView: View {
                 Text("Worktrees").font(.headline)
                 Spacer()
                 Button("Yenile") { state.refresh() }
-                Button("Ayarlar") { showSettings = true }
+                Button("Ayarlar") { openInFront(id: "settings") }
             }
 
             if let err = state.lastError {
@@ -48,26 +51,6 @@ struct MenuContentView: View {
         .padding(12)
         .frame(width: 360)
         .onAppear { state.refresh() }
-        .sheet(item: $newWorktreeRepo) { repo in
-            NewWorktreeView(repo: repo).environmentObject(state)
-        }
-        .sheet(isPresented: $showSettings) {
-            SettingsView().environmentObject(state)
-        }
-        .confirmationDialog(
-            pendingRemoval.map { "\"\($0.worktree.branch)\" worktree'sini sil" } ?? "Worktree'yi sil",
-            isPresented: $showRemoveDialog, titleVisibility: .visible
-        ) {
-            if let pending = pendingRemoval {
-                Button("Worktree'yi sil", role: .destructive) {
-                    state.removeWorktree(repo: pending.repo, worktree: pending.worktree, deleteBranch: false)
-                }
-                Button("Worktree + branch'i sil", role: .destructive) {
-                    state.removeWorktree(repo: pending.repo, worktree: pending.worktree, deleteBranch: true)
-                }
-                Button("İptal", role: .cancel) { }
-            }
-        }
     }
 
     @ViewBuilder
@@ -76,22 +59,46 @@ struct MenuContentView: View {
             HStack {
                 Text("\(repo.group)/\(repo.name)").font(.subheadline).bold()
                 Spacer()
-                Button("+ Yeni") { newWorktreeRepo = repo }
+                Button("+ Yeni") {
+                    state.newWorktreeRepoPath = repo.path
+                    openInFront(id: "new-worktree")
+                }
             }
             ForEach(state.worktreesByRepo[repo.path] ?? []) { wt in
-                HStack {
-                    Text(wt.branch).font(.caption)
-                    Spacer()
-                    Button("Cursor") { state.openEditor(wt.path) }
-                    Button("Terminal") { state.openTerminal(wt.path) }
-                    Button("Finder") { state.openFinder(wt.path) }
-                    Button(role: .destructive) {
-                        pendingRemoval = (repo, wt)
-                        showRemoveDialog = true
-                    } label: { Image(systemName: "trash") }
-                }
-                .padding(.leading, 8)
+                worktreeRow(repo: repo, wt: wt)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func worktreeRow(repo: Repo, wt: Worktree) -> some View {
+        if confirmingRemovalPath == wt.path {
+            HStack {
+                Text("\(wt.branch) — sil?").font(.caption)
+                Spacer()
+                Button("Worktree") {
+                    state.removeWorktree(repo: repo, worktree: wt, deleteBranch: false)
+                    confirmingRemovalPath = nil
+                }
+                Button("+ Branch") {
+                    state.removeWorktree(repo: repo, worktree: wt, deleteBranch: true)
+                    confirmingRemovalPath = nil
+                }
+                Button("İptal") { confirmingRemovalPath = nil }
+            }
+            .padding(.leading, 8)
+        } else {
+            HStack {
+                Text(wt.branch).font(.caption)
+                Spacer()
+                Button("Cursor") { state.openEditor(wt.path) }
+                Button("Terminal") { state.openTerminal(wt.path) }
+                Button("Finder") { state.openFinder(wt.path) }
+                Button(role: .destructive) { confirmingRemovalPath = wt.path } label: {
+                    Image(systemName: "trash")
+                }
+            }
+            .padding(.leading, 8)
         }
     }
 }
