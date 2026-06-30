@@ -4,6 +4,8 @@ import WorktreeCore
 
 struct MenuContentView: View {
     @EnvironmentObject var state: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     enum Pane: Equatable { case repo, settings, newWorktree }
     @State private var pane: Pane = .repo
@@ -17,19 +19,38 @@ struct MenuContentView: View {
         state.repos.first { $0.path == selectedRepoPath } ?? state.repos.first
     }
 
+    private var selectAnim: Animation? {
+        reduceMotion ? nil : .snappy(duration: 0.22)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            sidebar.background(Theme.railBG)
-            Rectangle().fill(Theme.hairline).frame(width: 1)
-            detail.frame(maxWidth: .infinity, maxHeight: .infinity).background(Theme.panelBG)
+            sidebar
+                .frame(width: 184)
+                .background(sidebarSurface)
+            Divider()
+            detail
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(detailSurface)
         }
-        .frame(width: 480, height: 560)
+        .frame(width: 560, height: 580)
         .focusable()
         .focused($navFocused)
         .focusEffectDisabled()
         .onKeyPress(action: handleKey)
         .onAppear { state.refresh(); navFocused = true }
         .onChange(of: pane) { _, new in if new != .newWorktree { navFocused = true } }
+    }
+
+    // MARK: Surfaces — native vibrancy, solid fallback under Reduce Transparency
+
+    @ViewBuilder private var sidebarSurface: some View {
+        if reduceTransparency { Color(nsColor: .windowBackgroundColor) }
+        else { VisualEffect(material: .sidebar) }
+    }
+    @ViewBuilder private var detailSurface: some View {
+        if reduceTransparency { Color(nsColor: .windowBackgroundColor) }
+        else { VisualEffect(material: .headerView) }
     }
 
     // MARK: Keyboard navigation (1-9, Tab / arrows)
@@ -48,69 +69,83 @@ struct MenuContentView: View {
 
     private func selectIndex(_ i: Int) {
         guard state.repos.indices.contains(i) else { return }
-        selectedRepoPath = state.repos[i].path; pane = .repo
+        withAnimation(selectAnim) { selectedRepoPath = state.repos[i].path; pane = .repo }
     }
 
     private func cycle(_ delta: Int) {
         guard !state.repos.isEmpty else { return }
         let cur = state.repos.firstIndex { $0.path == selectedRepo?.path } ?? 0
         let next = (cur + delta + state.repos.count) % state.repos.count
-        selectedRepoPath = state.repos[next].path; pane = .repo
+        withAnimation(selectAnim) { selectedRepoPath = state.repos[next].path; pane = .repo }
     }
 
-    // MARK: Sidebar
+    // MARK: Sidebar (source list)
 
     private var sidebar: some View {
         VStack(spacing: 0) {
+            Text("Depolar")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.textTertiary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 6)
+
             ScrollView {
-                VStack(spacing: 4) {
+                VStack(spacing: 2) {
                     ForEach(Array(state.repos.enumerated()), id: \.element.id) { idx, repo in
-                        repoTab(repo, index: idx)
+                        repoRow(repo, index: idx)
                     }
                 }
-                .padding(.vertical, 10)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
             }
-            Spacer(minLength: 0)
-            VStack(spacing: 2) {
-                railButton("folder.badge.plus", help: "Repo Ekle") { state.addReposViaPanel() }
-                railButton("gearshape", help: "Ayarlar", active: pane == .settings) { pane = .settings }
-                railButton("power", help: "Çıkış") { NSApplication.shared.terminate(nil) }
+
+            Divider()
+            HStack(spacing: 4) {
+                railButton("folder.badge.plus", label: "Repo ekle") { state.addReposViaPanel() }
+                railButton("gearshape", label: "Ayarlar", active: pane == .settings) {
+                    withAnimation(selectAnim) { pane = .settings }
+                }
+                Spacer()
+                railButton("power", label: "Çıkış") { NSApplication.shared.terminate(nil) }
             }
-            .padding(.vertical, 10)
+            .padding(.horizontal, 10).padding(.vertical, 8)
         }
-        .frame(width: 64)
     }
 
-    private func repoTab(_ repo: Repo, index: Int) -> some View {
+    private func repoRow(_ repo: Repo, index: Int) -> some View {
         let isSelected = pane == .repo && selectedRepo?.path == repo.path
         let isHovered = hoveredRepoPath == repo.path
-        let fill: Color = isSelected ? Theme.accent.opacity(0.13)
-                        : isHovered ? Theme.hover : .clear
         return Button {
-            selectedRepoPath = repo.path; pane = .repo
+            withAnimation(selectAnim) { selectedRepoPath = repo.path; pane = .repo }
         } label: {
-            HStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(isSelected ? Theme.accent : .clear)
-                    .frame(width: 2.5, height: 20)
-                ZStack(alignment: .topTrailing) {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(fill)
-                        .frame(width: 40, height: 40)
-                        .overlay(
-                            Text(initials(repo.name))
-                                .font(Theme.mono(12.5, .semibold))
-                                .foregroundStyle(isSelected ? Theme.accent : Theme.textSecondary)
-                        )
-                    if index < 9 {
-                        Text("\(index + 1)")
-                            .font(Theme.mono(7.5, .medium))
-                            .foregroundStyle(Theme.textTertiary)
-                            .padding(.top, 3).padding(.trailing, 4)
-                    }
+            HStack(spacing: 9) {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(isSelected ? Theme.accent : Color.primary.opacity(0.08))
+                    .frame(width: 26, height: 26)
+                    .overlay(
+                        Image(systemName: "shippingbox.fill")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(isSelected ? .white : Theme.textSecondary)
+                    )
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(repo.name)
+                        .font(.system(size: 12.5, weight: .medium))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1).truncationMode(.middle)
+                    Text(repo.group)
+                        .font(.system(size: 10))
+                        .foregroundStyle(Theme.textTertiary)
+                        .lineLimit(1).truncationMode(.middle)
                 }
+                Spacer(minLength: 4)
+                if index < 9 { shortcutKeycap(index + 1, selected: isSelected) }
             }
-            .padding(.trailing, 4)
+            .padding(.horizontal, 8).padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.rRow, style: .continuous)
+                    .fill(isSelected ? Theme.accent.opacity(0.16)
+                          : isHovered ? Theme.hover : .clear)
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -118,16 +153,28 @@ struct MenuContentView: View {
         .help("\(repo.group)/\(repo.name)  ·  \(index + 1)")
     }
 
-    private func railButton(_ symbol: String, help: String, active: Bool = false,
+    /// Small keycap showing the repo's 1-9 keyboard shortcut — a quiet hint,
+    /// tinted accent when the repo is selected.
+    private func shortcutKeycap(_ n: Int, selected: Bool) -> some View {
+        Text("\(n)")
+            .font(.system(size: 10, weight: .medium, design: .rounded))
+            .foregroundStyle(selected ? Theme.accent : Theme.textTertiary)
+            .frame(width: 17, height: 17)
+            .background(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Color.primary.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .strokeBorder(Theme.hairline, lineWidth: 1)
+                    )
+            )
+    }
+
+    private func railButton(_ symbol: String, label: String, active: Bool = false,
                             action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 15))
-                .foregroundStyle(active ? Theme.accent : Theme.textSecondary)
-                .frame(width: 40, height: 30)
-                .background(RoundedRectangle(cornerRadius: 8).fill(active ? Theme.accent.opacity(0.13) : .clear))
-        }
-        .buttonStyle(.plain)
-        .help(help)
+        RailButton(symbol: symbol, active: active, action: action)
+            .help(label)
+            .accessibilityLabel(label)
     }
 
     // MARK: Detail
@@ -138,7 +185,7 @@ struct MenuContentView: View {
         case .settings:
             SettingsView()
         case .newWorktree:
-            if let repo = selectedRepo { NewWorktreeForm(repo: repo, onClose: { pane = .repo }) }
+            if let repo = selectedRepo { NewWorktreeForm(repo: repo, onClose: { withAnimation(selectAnim) { pane = .repo } }) }
             else { emptyState }
         case .repo:
             if let repo = selectedRepo { repoDetail(repo) } else { emptyState }
@@ -148,38 +195,37 @@ struct MenuContentView: View {
     private func repoDetail(_ repo: Repo) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(repo.name)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
-                    Text(repo.group).font(Theme.mono(10)).foregroundStyle(Theme.textTertiary)
-                }
-                if state.isRefreshing { ProgressView().controlSize(.small) }
-                Spacer()
-                Button { state.refresh() } label: {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 12, weight: .medium))
+                    Text(repo.group)
+                        .font(.system(size: 11))
                         .foregroundStyle(Theme.textSecondary)
                 }
-                .buttonStyle(.plain).help("Yenile")
-                Button { pane = .newWorktree } label: {
-                    Label("Yeni", systemImage: "plus")
-                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(.black)
-                        .padding(.horizontal, 11).padding(.vertical, 5)
-                        .background(Capsule().fill(Theme.accent))
+                if state.isRefreshing { ProgressView().controlSize(.small).padding(.leading, 2) }
+                Spacer()
+                Button { state.refresh() } label: {
+                    Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Theme.textSecondary)
                 }
-                .buttonStyle(.plain).help("Yeni worktree")
+                .buttonStyle(.plain).help("Yenile").accessibilityLabel("Yenile")
+                Button { withAnimation(selectAnim) { pane = .newWorktree } } label: {
+                    Label("Yeni", systemImage: "plus")
+                }
+                .buttonStyle(AccentPill(size: 12)).help("Yeni worktree")
             }
-            .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 13)
+            .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
 
             if let err = state.lastError {
-                Text(err).font(Theme.mono(10.5)).foregroundStyle(Theme.danger).lineLimit(2)
-                    .padding(.horizontal, 16).padding(.bottom, 8)
+                Text(err).font(Theme.mono(11)).foregroundStyle(Theme.danger).lineLimit(2)
+                    .padding(.horizontal, 20).padding(.bottom, 10)
             }
-            Rectangle().fill(Theme.hairline).frame(height: 1)
+            Divider()
 
             let worktrees = state.worktreesByRepo[repo.path] ?? []
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                LazyVStack(alignment: .leading, spacing: 1) {
                     if worktrees.isEmpty {
                         emptyWorktrees
                     }
@@ -187,33 +233,33 @@ struct MenuContentView: View {
                         worktreeRow(repo: repo, wt: wt)
                     }
                 }
-                .padding(.vertical, 6)
+                .padding(.horizontal, 8).padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Rectangle().fill(Theme.hairline).frame(height: 1)
+            Divider()
             HStack(spacing: 0) {
-                Text("\(worktrees.count) worktree").font(Theme.mono(10))
-                    .foregroundStyle(Theme.textTertiary)
+                Text(worktrees.count == 1 ? "1 worktree" : "\(worktrees.count) worktree")
+                    .font(.system(size: 11)).foregroundStyle(Theme.textTertiary)
                 Spacer()
-                Text(repo.path.abbreviatingHome).font(Theme.mono(10))
+                Text(repo.path.abbreviatingHome).font(Theme.mono(10.5))
                     .foregroundStyle(Theme.textTertiary).lineLimit(1).truncationMode(.middle)
             }
-            .padding(.horizontal, 16).padding(.vertical, 8)
+            .padding(.horizontal, 20).padding(.vertical, 10)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var emptyWorktrees: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 22)).foregroundStyle(Theme.textTertiary)
-            Text("Henüz worktree yok").font(.system(size: 12.5, weight: .medium))
+                .font(.system(size: 24)).foregroundStyle(Theme.textTertiary)
+            Text("Henüz worktree yok").font(.system(size: 13, weight: .medium))
                 .foregroundStyle(Theme.textSecondary)
-            Text("\u{201C}Yeni\u{201D} ile ilk worktree'yi oluştur").font(Theme.mono(10))
-                .foregroundStyle(Theme.textTertiary)
+            Text("\u{201C}Yeni\u{201D} ile ilk worktree\u{2019}yi oluştur")
+                .font(.system(size: 11)).foregroundStyle(Theme.textTertiary)
         }
-        .frame(maxWidth: .infinity).padding(.vertical, 36)
+        .frame(maxWidth: .infinity).padding(.vertical, 44)
     }
 
     @ViewBuilder
@@ -221,19 +267,19 @@ struct MenuContentView: View {
         let hovered = hoveredPath == wt.path
         HStack(spacing: 11) {
             Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(hovered ? Theme.accent : Theme.textTertiary)
-                .frame(width: 14)
+                .frame(width: 16)
             VStack(alignment: .leading, spacing: 2) {
-                Text(wt.branch).font(Theme.mono(12.5))
+                Text(wt.branch).font(.system(size: 13, weight: .medium))
                     .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
-                Text(folderName(wt.path)).font(Theme.mono(9.5))
+                Text(folderName(wt.path)).font(Theme.mono(10))
                     .foregroundStyle(Theme.textTertiary).lineLimit(1).truncationMode(.middle)
             }
             Spacer(minLength: 8)
 
             if confirmingRemovalPath == wt.path {
-                Text("Sil?").font(Theme.mono(10)).foregroundStyle(Theme.textSecondary)
+                Text("Sil?").font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
                 pillButton("Worktree") {
                     state.removeWorktree(repo: repo, worktree: wt, deleteBranch: false); confirmingRemovalPath = nil
                 }
@@ -242,49 +288,40 @@ struct MenuContentView: View {
                 }
                 rowAction("xmark", help: "Vazgeç") { confirmingRemovalPath = nil }
             } else {
-                HStack(spacing: 2) {
+                HStack(spacing: 4) {
                     rowAction("chevron.left.forwardslash.chevron.right",
-                              app: state.config.editorApp,
                               help: state.config.editorApp) { state.openEditor(wt.path) }
-                    rowAction("terminal", app: state.config.terminalApp,
+                    rowAction("terminal",
                               help: state.config.terminalApp) { state.openTerminal(wt.path) }
                     rowAction("folder", help: "Finder") { state.openFinder(wt.path) }
                     rowAction("trash", help: "Sil", danger: true) { confirmingRemovalPath = wt.path }
                 }
                 .opacity(hovered ? 1 : 0)
-                .animation(.easeOut(duration: 0.12), value: hovered)
+                .offset(x: reduceMotion ? 0 : (hovered ? 0 : 8))
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hovered)
             }
         }
-        .padding(.horizontal, 16).padding(.vertical, 9)
-        .background(hovered ? Theme.hover : .clear)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(Theme.accent)
-                .frame(width: 2)
-                .opacity(hovered ? 1 : 0)
-        }
+        .padding(.horizontal, 12).padding(.vertical, 9)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.rRow, style: .continuous)
+                .fill(hovered ? Theme.hover : .clear)
+        )
         .contentShape(Rectangle())
         .onHover { hovering in hoveredPath = hovering ? wt.path : (hovered ? nil : hoveredPath) }
-        .animation(.easeOut(duration: 0.1), value: hovered)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: hovered)
     }
 
     // MARK: Action buttons — one uniform, ghost, monochrome family
 
-    private func rowAction(_ symbol: String, app: String? = nil, help: String, danger: Bool = false,
+    private func rowAction(_ symbol: String, help: String, danger: Bool = false,
                            action: @escaping () -> Void) -> some View {
-        RowActionButton(symbol: symbol, appName: app, danger: danger, action: action).help(help)
+        RowActionButton(symbol: symbol, danger: danger, action: action)
+            .help(help).accessibilityLabel(help)
     }
 
     private func pillButton(_ title: String, danger: Bool = false,
                             action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title).font(Theme.mono(10, .medium))
-                .foregroundStyle(danger ? Theme.danger : Theme.textSecondary)
-                .padding(.horizontal, 9).padding(.vertical, 4)
-                .background(Capsule().fill(Theme.hover))
-                .overlay(Capsule().strokeBorder(
-                    (danger ? Theme.danger : Theme.textSecondary).opacity(0.25), lineWidth: 1))
-        }
-        .buttonStyle(.plain)
+        Button(title, action: action).buttonStyle(GhostPill(size: 11, danger: danger))
     }
 
     private func folderName(_ path: String) -> String {
@@ -294,85 +331,74 @@ struct MenuContentView: View {
     // MARK: Empty state
 
     private var emptyState: some View {
-        VStack(spacing: 9) {
+        VStack(spacing: 10) {
             Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 28)).foregroundStyle(Theme.textTertiary)
-            Text("Repo yok").font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 30)).foregroundStyle(Theme.textTertiary)
+            Text("Repo yok").font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Theme.textSecondary)
             if state.isRefreshing {
                 HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Yükleniyor…") }
                     .font(.system(size: 12)).foregroundStyle(Theme.textTertiary)
             } else {
-                Text("Soldaki \u{201C}Repo Ekle\u{201D} ile bir klasör seç")
+                Text("Soldaki \u{201C}Repo ekle\u{201D} ile bir klasör seç")
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                 Text(state.config.scanRoots.joined(separator: ", "))
-                    .font(Theme.mono(9.5)).foregroundStyle(Theme.textTertiary)
+                    .font(Theme.mono(10)).foregroundStyle(Theme.textTertiary)
             }
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
 
-    private func initials(_ name: String) -> String {
-        let core = name.split(separator: "-").last.map(String.init) ?? name
-        return String(core.prefix(2)).uppercased()
+/// A small toolbar-style button for the sidebar footer (add / settings / quit).
+private struct RailButton: View {
+    let symbol: String
+    var active: Bool = false
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 14, weight: .medium))
+                .foregroundStyle(active ? Theme.accent : Theme.textSecondary)
+                .frame(width: 30, height: 26)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(active ? Theme.accent.opacity(0.16) : hovering ? Theme.hover : .clear)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }
 
-/// A row action: ghost by default, brightens to primary (or danger) only when
-/// the pointer is over it. Keeps the resting row quiet — actions surface on
-/// intent, not by shouting.
+/// A row action: a uniform monochrome SF Symbol, ghost by default, brightening
+/// to primary (or danger) only on hover. Every action — editor, terminal,
+/// Finder, delete — shares the same symbol family so the row reads as one set,
+/// not a mix of vendor logos.
 private struct RowActionButton: View {
     let symbol: String
-    var appName: String? = nil
     var danger: Bool = false
     let action: () -> Void
     @State private var hovering = false
 
     var body: some View {
         Button(action: action) {
-            icon
-                .frame(width: 26, height: 26)
-                .background(RoundedRectangle(cornerRadius: 6)
-                    .fill(hovering ? Theme.hover : .clear))
+            Image(systemName: symbol)
+                .font(.system(size: 12.5, weight: .medium))
+                .foregroundStyle(hovering ? (danger ? Theme.danger : Theme.textPrimary)
+                                          : Theme.textSecondary)
+                .frame(width: 27, height: 27)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(hovering ? Theme.selected : .clear)
+                )
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-    }
-
-    @ViewBuilder
-    private var icon: some View {
-        // Show the real app logo when we have one (editor/terminal); otherwise a
-        // monochrome symbol. Either way the container is identical, so the row of
-        // actions reads as one uniform family.
-        if let app = appName, let img = AppIconCache.icon(app) {
-            Image(nsImage: img).resizable().frame(width: 15, height: 15)
-                .opacity(hovering ? 1 : 0.8)
-        } else {
-            Image(systemName: symbol)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(hovering ? (danger ? Theme.danger : Theme.textPrimary)
-                                          : Theme.textSecondary)
-        }
-    }
-}
-
-/// Caches resolved macOS app icons by app name.
-private enum AppIconCache {
-    private static var cache: [String: NSImage] = [:]
-    static func icon(_ name: String) -> NSImage? {
-        if let cached = cache[name] { return cached }
-        let ws = NSWorkspace.shared
-        var path = ws.fullPath(forApplication: name)
-        if path == nil {
-            let guess = "/Applications/\(name).app"
-            if FileManager.default.fileExists(atPath: guess) { path = guess }
-        }
-        guard let path else { return nil }
-        let icon = ws.icon(forFile: path)
-        cache[name] = icon
-        return icon
     }
 }
 

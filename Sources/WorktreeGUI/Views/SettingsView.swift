@@ -14,7 +14,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 Text("Ayarlar")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
 
                 section("Repo Kaynakları",
@@ -71,7 +71,7 @@ struct SettingsView: View {
                     .font(Theme.mono(9.5)).foregroundStyle(Theme.textTertiary)
                     .textSelection(.enabled)
             }
-            .padding(16)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -97,12 +97,12 @@ struct SettingsView: View {
     @ViewBuilder
     private func section<C: View>(_ title: String, _ subtitle: String,
                                   @ViewBuilder content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            Text(title.uppercased())
-                .font(Theme.mono(9, .medium)).tracking(0.5)
-                .foregroundStyle(Theme.textSecondary)
-            Text(subtitle).font(.system(size: 10.5)).foregroundStyle(Theme.textTertiary)
-            content().padding(.top, 1)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+            Text(subtitle).font(.system(size: 11)).foregroundStyle(Theme.textTertiary)
+            content().padding(.top, 2)
         }
     }
 

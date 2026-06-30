@@ -22,18 +22,16 @@ struct NewWorktreeForm: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Yeni Worktree")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
-                    Text(repo.name).font(Theme.mono(10)).foregroundStyle(Theme.textTertiary)
+                    Text(repo.name).font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Picker("", selection: $mode) {
-                    Text("Var olan branch").tag(0)
-                    Text("Yeni branch").tag(1)
-                }
-                .pickerStyle(.segmented).labelsHidden()
-                .disabled(submitted)
+                LiquidTabs(selection: $mode,
+                           tabs: [(0, "Var olan branch"), (1, "Yeni branch")])
+                    .disabled(submitted)
+                    .opacity(submitted ? 0.5 : 1)
 
                 if mode == 0 {
                     labeled("Branch") {
@@ -100,7 +98,7 @@ struct NewWorktreeForm: View {
                 }
                 .padding(.top, 4)
             }
-            .padding(16)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .onAppear {
@@ -124,9 +122,9 @@ struct NewWorktreeForm: View {
     @ViewBuilder
     private func labeled<C: View>(_ title: String, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title.uppercased())
-                .font(Theme.mono(9, .medium)).tracking(0.5)
-                .foregroundStyle(Theme.textTertiary)
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Theme.textSecondary)
             content()
         }
     }
