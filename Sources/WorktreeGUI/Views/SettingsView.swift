@@ -2,12 +2,12 @@ import SwiftUI
 import AppKit
 import WorktreeCore
 
-/// Inline settings pane (shown inside the popover's detail area, not a window).
-/// Picker-based on purpose: free-text fields don't get reliable keyboard focus
-/// in a MenuBarExtra popover, so everything is choosable without typing.
+/// Settings pane shown inside the popover's detail area (not a separate window).
 ///
-/// Laid out like System Settings: a section title + caption above each grouped
-/// card. App lists are discovered from what's installed, not hardcoded.
+/// Built as a native grouped `Form`: every setting is a `Section`, so the
+/// platform supplies the card surfaces, insets, headers/footers, and Light/Dark
+/// treatment for free — the single "section" pattern, the System-Settings look.
+/// App lists are discovered from what's installed, not hardcoded.
 struct SettingsView: View {
     @EnvironmentObject var state: AppState
 
@@ -15,98 +15,154 @@ struct SettingsView: View {
     private var editors: [String] { InstalledApps.installed(InstalledApps.editors) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(spacing: 10) {
-                    SidebarToggle()
-                    if state.sidebarCollapsed {
-                        JigMark().frame(width: 18, height: 18)
-                            .foregroundStyle(Brand.signalOrange)
-                    }
-                    Text(state.t(.settingsTitle))
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            header
 
-                section(state.t(.languageTitle), state.t(.languageCaption)) {
-                    LiquidTabs(
-                        selection: Binding(get: { state.language }, set: { state.setLanguage($0) }),
-                        tabs: Language.allCases.map { (value: $0, title: $0.label) },
-                        selectedFill: .white,
-                        selectedTextColor: .black
-                    )
-                }
-
-                section(state.t(.repoSourcesTitle), state.t(.repoSourcesCaption)) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        if state.config.scanRoots.isEmpty && state.config.manualRepos.isEmpty {
-                            Text(state.t(.noSourcesYet)).font(.system(size: 11))
-                                .foregroundStyle(Theme.textTertiary)
+            Form {
+                // Language — segmented switch under a titled header.
+                Section {
+                    Picker(state.t(.languageTitle),
+                           selection: Binding(get: { state.language },
+                                              set: { state.setLanguage($0) })) {
+                        ForEach(Language.allCases, id: \.self) { lang in
+                            Text(lang.label).tag(lang)
                         }
-                        ForEach(state.config.scanRoots, id: \.self) { sourceRow($0, kind: state.t(.kindRoot), isRepo: false) }
-                        ForEach(state.config.manualRepos, id: \.self) { sourceRow($0, kind: state.t(.kindRepo), isRepo: true) }
-                        Button { state.addReposViaPanel() } label: {
-                            Label(state.t(.addFromFinder), systemImage: "folder.badge.plus")
-                        }
-                        .buttonStyle(GhostPill(size: 11))
-                        .padding(.top, 2)
                     }
-                }
-
-                section(state.t(.scanDepthTitle), state.t(.scanDepthCaption)) {
-                    LiquidTabs(
-                        selection: depthBinding,
-                        tabs: (1...5).map { (value: $0, title: "\($0)") },
-                        selectedFill: .white,
-                        selectedTextColor: .black
-                    )
-                }
-
-                section(state.t(.terminalTitle), state.t(.terminalCaption)) {
-                    Picker("", selection: appBinding(\.terminalApp)) {
-                        ForEach(options(state.config.terminalApp, terminals), id: \.self) { Text($0).tag($0) }
-                    }
+                    .pickerStyle(.segmented)
                     .labelsHidden()
+                } header: {
+                    Text(state.t(.languageTitle))
+                } footer: {
+                    Text(state.t(.languageCaption))
                 }
 
-                section(state.t(.editorTitle), state.t(.editorCaption)) {
-                    Picker("", selection: appBinding(\.editorApp)) {
-                        ForEach(options(state.config.editorApp, editors), id: \.self) { Text($0).tag($0) }
+                // Repo sources — scan roots + manual repos, plus the add button.
+                Section {
+                    if state.config.scanRoots.isEmpty && state.config.manualRepos.isEmpty {
+                        Text(state.t(.noSourcesYet)).foregroundStyle(.secondary)
                     }
+                    ForEach(state.config.scanRoots, id: \.self) {
+                        sourceRow($0, kind: state.t(.kindRoot), isRepo: false)
+                    }
+                    ForEach(state.config.manualRepos, id: \.self) {
+                        sourceRow($0, kind: state.t(.kindRepo), isRepo: true)
+                    }
+                    Button {
+                        state.addReposViaPanel()
+                    } label: {
+                        Label(state.t(.addFromFinder), systemImage: "folder.badge.plus")
+                    }
+                    .buttonStyle(.bordered)
+                } header: {
+                    Text(state.t(.repoSourcesTitle))
+                } footer: {
+                    Text(state.t(.repoSourcesCaption))
+                }
+
+                // Scan depth — segmented 1...5 under a titled header.
+                Section {
+                    Picker(state.t(.scanDepthTitle), selection: depthBinding) {
+                        ForEach(1...5, id: \.self) { Text("\($0)").tag($0) }
+                    }
+                    .pickerStyle(.segmented)
                     .labelsHidden()
+                } header: {
+                    Text(state.t(.scanDepthTitle))
+                } footer: {
+                    Text(state.t(.scanDepthCaption))
                 }
 
-                section(state.t(.packageManagerTitle), state.t(.packageManagerCaption)) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if state.repos.isEmpty {
-                            Text(state.t(.noReposFound)).font(.system(size: 11))
-                                .foregroundStyle(Theme.textTertiary)
+                // Terminal — labeled menu row (the title is the row's own label,
+                // so no duplicate section header).
+                Section {
+                    Picker(state.t(.terminalTitle), selection: appBinding(\.terminalApp)) {
+                        ForEach(options(state.config.terminalApp, terminals), id: \.self) {
+                            Text($0).tag($0)
                         }
-                        ForEach(state.repos) { repo in packageManagerRow(repo) }
                     }
+                    .pickerStyle(.menu)
+                } footer: {
+                    Text(state.t(.terminalCaption))
                 }
 
-                section(state.t(.startupCommandTitle), state.t(.startupCommandCaption)) {
-                    TextField(state.t(.startupPlaceholder), text: Binding(
-                        get: { state.config.terminalStartupCommand },
-                        set: { state.config.terminalStartupCommand = $0 }
-                    ))
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { state.saveConfig() }
+                // Editor — labeled menu row.
+                Section {
+                    Picker(state.t(.editorTitle), selection: appBinding(\.editorApp)) {
+                        ForEach(options(state.config.editorApp, editors), id: \.self) {
+                            Text($0).tag($0)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                } footer: {
+                    Text(state.t(.editorCaption))
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(state.t(.editConfigHint))
-                        .font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
-                    Text(ConfigStore.defaultPath.abbreviatingHome)
-                        .font(Theme.mono(10)).foregroundStyle(Theme.textTertiary)
-                        .textSelection(.enabled)
+                // Package managers — one labeled menu row per discovered repo.
+                Section {
+                    if state.repos.isEmpty {
+                        Text(state.t(.noReposFound)).foregroundStyle(.secondary)
+                    }
+                    ForEach(state.repos) { repo in packageManagerRow(repo) }
+                } header: {
+                    Text(state.t(.packageManagerTitle))
+                } footer: {
+                    Text(state.t(.packageManagerCaption))
                 }
-                .padding(.top, 2)
+
+                // Startup command — labeled text row.
+                Section {
+                    LabeledContent {
+                        TextField(state.t(.startupPlaceholder), text: Binding(
+                            get: { state.config.terminalStartupCommand },
+                            set: { state.config.terminalStartupCommand = $0 }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { state.saveConfig() }
+                    } label: {
+                        Text(state.t(.startupCommandTitle))
+                    }
+                } footer: {
+                    Text(state.t(.startupCommandCaption))
+                }
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .formStyle(.grouped)
+
+            configHint
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    // MARK: chrome
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            SidebarToggle()
+            if state.sidebarCollapsed {
+                JigMark().frame(width: 18, height: 18)
+                    .foregroundStyle(Brand.signalOrange)
+            }
+            Text(state.t(.settingsTitle))
+                .font(.title3).fontWeight(.semibold)
+                .foregroundStyle(.primary)
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 12)
+    }
+
+    /// Where the JSON config lives, for hand-editing — a read-only mono path.
+    private var configHint: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(state.t(.editConfigHint))
+                .font(.caption).foregroundStyle(.secondary)
+            Text(ConfigStore.defaultPath.abbreviatingHome)
+                .font(Theme.mono(11)).foregroundStyle(.tertiary)
+                .textSelection(.enabled)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
     }
 
     // MARK: bindings (apply + persist immediately)
@@ -130,62 +186,42 @@ struct SettingsView: View {
         presets.contains(current) ? presets : [current] + presets
     }
 
-    // MARK: pieces
-
-    @ViewBuilder
-    private func section<C: View>(_ title: String, _ subtitle: String,
-                                  @ViewBuilder content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: 12.5, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text(subtitle).font(.system(size: 11)).foregroundStyle(Theme.textTertiary)
-            }
-            content()
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Theme.surfaceRaised)
-                )
-        }
-    }
+    // MARK: rows
 
     @ViewBuilder
     private func sourceRow(_ path: String, kind: String, isRepo: Bool) -> some View {
         HStack(spacing: 8) {
             Image(systemName: isRepo ? "shippingbox" : "folder")
-                .font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.textSecondary).frame(width: 14)
-            Text(path.abbreviatingHome).font(Theme.mono(10.5))
-                .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
-            Text(kind).font(.system(size: 9, weight: .medium)).foregroundStyle(Theme.textTertiary)
-                .padding(.horizontal, 5).padding(.vertical, 1)
-                .background(Capsule().fill(Color.primary.opacity(0.08)))
-            Spacer()
-            Button { state.removeSource(path) } label: {
+                .foregroundStyle(.secondary)
+                .frame(width: 16)
+            Text(path.abbreviatingHome)
+                .font(Theme.mono(11))
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 8)
+            Text(kind)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button(role: .destructive) {
+                state.removeSource(path)
+            } label: {
                 Image(systemName: "minus.circle.fill")
-                    .font(.system(size: 12)).foregroundStyle(Theme.danger.opacity(0.85))
             }
-            .buttonStyle(.plain).help(state.t(.remove))
+            .buttonStyle(.borderless)
+            .help(state.t(.remove))
         }
     }
 
     @ViewBuilder
     private func packageManagerRow(_ repo: Repo) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "shippingbox")
-                .font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.textSecondary).frame(width: 14)
-            Text(repo.name).font(.system(size: 12))
-                .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
-            Spacer()
-            Picker("", selection: pmBinding(repo)) {
-                Text(state.t(.pmNone)).tag("none")
-                ForEach(PackageManager.allCases, id: \.self) { pm in
-                    Text(pm.label).tag(pm.rawValue)
-                }
+        Picker(selection: pmBinding(repo)) {
+            Text(state.t(.pmNone)).tag("none")
+            ForEach(PackageManager.allCases, id: \.self) { pm in
+                Text(pm.label).tag(pm.rawValue)
             }
-            .labelsHidden().frame(width: 110)
+        } label: {
+            Label(repo.name, systemImage: "shippingbox")
         }
+        .pickerStyle(.menu)
     }
 }

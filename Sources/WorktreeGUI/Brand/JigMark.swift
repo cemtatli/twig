@@ -32,7 +32,7 @@ struct JigWordmark: View {
                 .font(.system(size: size, weight: .heavy, design: .rounded))
                 .tracking(-0.5)
         }
-        .foregroundStyle(Theme.textPrimary)
+        .foregroundStyle(.primary)
     }
 }
 

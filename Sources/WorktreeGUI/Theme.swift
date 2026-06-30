@@ -1,116 +1,45 @@
 import SwiftUI
 import AppKit
 
-/// Design tokens for Jig's OpenUsage-inspired visual language.
+/// Thin semantic-token + shared-helper layer for Jig.
 ///
-/// The surface is a flat near-black canvas (`Theme.canvas`), not native
-/// vibrancy — a deliberate departure from the system-chrome look so the app
-/// reads as its own branded dashboard. Color still centers on one signal hue
-/// (`Brand.signalOrange`); type is SF Pro for chrome with SF Mono kept for
-/// the things that are literally code — branch folders and paths. Everything
-/// sits on an 8pt rhythm.
+/// Jig is an Apple-native menubar utility: it sits on the platform's own design
+/// system — semantic fonts (`.title3` / `.body` / `.caption`), semantic colors
+/// (`Color.primary` / `.secondary` / `.tertiary`), the **system accent** for all
+/// selection and emphasis, and system materials (`.listStyle(.sidebar)`
+/// vibrancy, grouped `Form`). There is intentionally no owned color/control
+/// design system here — that was the old "OpenUsage" direction and it read as
+/// generic. The brand survives only as the `JigMark` logo and the menubar icon
+/// (the one allowed brand-orange use, in `Brand.signalOrange`).
+///
+/// This file holds just the few things the platform does not give for free: the
+/// git clean/dirty status colors, a mono-font helper reserved for paths/log, the
+/// installed-app discovery, and the sidebar toggle control.
 enum Theme {
-    // MARK: Accent + state — brand signal, not the system accent
-    static let accent = Brand.signalOrange
-    static let danger = Color(nsColor: .systemRed)
-
-    // MARK: Text ramp — semantic, adapts to appearance & accessibility
-    static let textPrimary   = Color.primary
-    static let textSecondary = Color.secondary
-    static let textTertiary  = Color(nsColor: .tertiaryLabelColor)
-
-    // MARK: Fills + lines
-    static let hover    = Brand.tintHover
-    static let selected = Brand.tintSelected
-    static let hairline = Color(nsColor: .separatorColor)
-
-    // MARK: Canvas — flat near-black surface (replaces native vibrancy)
-    static let canvas = Color(red: 0.05, green: 0.05, blue: 0.055)
-
-    /// One step lighter than `canvas` — gives cards/rows visible separation
-    /// from the page behind them instead of sitting at the identical tone.
-    static let surfaceRaised = Color(red: 0.11, green: 0.11, blue: 0.12)
-
-    // MARK: Layout
-    static let railWidth: CGFloat = 64
-
-    // MARK: Status dots — distinct from `accent` so a dirty dot never reads
-    // as a selection indicator.
+    // MARK: Status dots — git worktree clean/dirty. Semantic system green/red so
+    // they adapt to appearance, accent, and accessibility.
     static let dotClean = Color(nsColor: .systemGreen)
     static let dotDirty = Color(nsColor: .systemRed)
 
-    // MARK: Corner radii (continuous, like AppKit controls)
-    static let rControl: CGFloat = 7
-    static let rRow: CGFloat = 7
+    /// Error/destructive text color (not buttons — buttons use `role:
+    /// .destructive`). Semantic system red.
+    static let danger = Color(nsColor: .systemRed)
 
-    /// Monospace face — reserved for branch folders and paths, the app's code.
+    /// Monospace face — reserved for read-only filesystem paths and terminal log
+    /// output. Never for input fields or chrome labels (those are SF Pro).
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .monospaced)
     }
-
-    // MARK: Rail avatar palette — deterministic per-repo hue, distinct from
-    // `accent` so an unselected badge's color is never mistaken for the
-    // selected-state signal.
-    static let avatarPalette: [Color] = [
-        Color(nsColor: .systemBlue),
-        Color(nsColor: .systemTeal),
-        Color(nsColor: .systemIndigo),
-        Color(nsColor: .systemPurple),
-        Color(nsColor: .systemPink),
-        Color(nsColor: .systemMint),
-    ]
-
-    /// Stable per-repo color hashed from the repo name. Deliberately not
-    /// `String.hashValue` — that's randomized per process, so the same repo
-    /// would get a different color on every relaunch. djb2 over UTF8 bytes
-    /// is deterministic across runs.
-    static func avatarColor(for name: String) -> Color {
-        var hash: UInt64 = 5381
-        for byte in name.utf8 { hash = ((hash << 5) &+ hash) &+ UInt64(byte) }
-        let index = Int(hash % UInt64(avatarPalette.count))
-        return avatarPalette[index].opacity(0.55)
-    }
 }
 
-// MARK: - Brand tokens
+// MARK: - Brand
 
-/// Jig brand tokens. The one signal color over the native graphite/vibrancy
-/// surface; everything else stays semantic + system.
+/// The Jig brand. Reduced to the single logo color — Jig uses the system accent
+/// for every control, so the brand orange appears ONLY on the `JigMark` glyph
+/// and the menubar icon.
 enum Brand {
-    /// #FF6A1A — the single brand accent.
+    /// #FF6A1A — the Jig logo orange. Logo/menubar-icon use only.
     static let signalOrange = Color(red: 1.0, green: 0.416, blue: 0.102)
-    /// #DB4D0D — deeper orange, used only as the bottom of the primary gradient.
-    static let signalDeep   = Color(red: 0.859, green: 0.302, blue: 0.051)
-    /// Accent-tinted interaction fills over vibrancy (replace the old gray opacities).
-    static let tintHover    = signalOrange.opacity(0.10)
-    static let tintSelected = signalOrange.opacity(0.16)
-    /// The selected-row spine color.
-    static let spine        = signalOrange
-    /// Primary-button fill — a subtle vertical orange gradient.
-    static let accentGradient = LinearGradient(
-        colors: [signalOrange, signalDeep],
-        startPoint: .top, endPoint: .bottom)
-}
-
-// MARK: - Button styles
-
-/// Primary action — system-accent fill, white label, gentle press scale.
-/// The one emphasized control on screen.
-struct AccentPill: ButtonStyle {
-    var size: CGFloat = 13
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: size, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 13).padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.rControl, style: .continuous)
-                    .fill(Brand.accentGradient)
-                    .opacity(configuration.isPressed ? 0.82 : 1)
-            )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.snappy(duration: 0.12), value: configuration.isPressed)
-    }
 }
 
 // MARK: - Sidebar toggle
@@ -129,7 +58,7 @@ struct SidebarToggle: View {
         } label: {
             Image(systemName: "sidebar.leading")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.textSecondary)
+                .foregroundStyle(.secondary)
                 .frame(width: 26, height: 24)
                 .contentShape(Rectangle())
         }
@@ -157,95 +86,5 @@ enum InstalledApps {
     static func isInstalled(_ appName: String) -> Bool {
         if NSWorkspace.shared.fullPath(forApplication: appName) != nil { return true }
         return FileManager.default.fileExists(atPath: "/Applications/\(appName).app")
-    }
-}
-
-// MARK: - Liquid Glass tabs
-
-/// A tab selector whose selected indicator is a Liquid Glass capsule that
-/// slides between tabs (macOS 26+). Before 26 it degrades to a solid accent
-/// capsule. Used where a binary/short mode choice reads better as tabs than as
-/// a system segmented control.
-struct LiquidTabs<Value: Hashable>: View {
-    @Binding var selection: Value
-    let tabs: [(value: Value, title: String)]
-    var selectedFill: Color = Theme.accent
-    var selectedTextColor: Color = .white
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Namespace private var ns
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(tabs, id: \.value) { tab in
-                let isSel = selection == tab.value
-                Button {
-                    if reduceMotion { selection = tab.value }
-                    else { withAnimation(.snappy(duration: 0.3)) { selection = tab.value } }
-                } label: {
-                    Text(tab.title)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isSel ? selectedTextColor : Theme.textSecondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 7)
-                        .contentShape(Rectangle())
-                        .background {
-                            if isSel {
-                                GlassIndicator(fill: selectedFill).matchedGeometryEffect(id: "liquidTab", in: ns)
-                            }
-                        }
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(3)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color.primary.opacity(0.06))
-        )
-    }
-}
-
-/// The sliding selected pill — real Liquid Glass on macOS 26, solid accent before.
-private struct GlassIndicator: View {
-    var fill: Color = Theme.accent
-    var body: some View {
-        if #available(macOS 26.0, *) {
-            Capsule(style: .continuous)
-                .fill(.clear)
-                .glassEffect(.regular.tint(fill).interactive(), in: .capsule)
-        } else {
-            Capsule(style: .continuous).fill(fill)
-        }
-    }
-}
-
-/// Quiet secondary action — a tinted ghost that reads as a control without
-/// competing with the accent.
-struct GhostPill: ButtonStyle {
-    var size: CGFloat = 13
-    var danger: Bool = false
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: size, weight: .medium))
-            .foregroundStyle(danger ? Theme.danger : Theme.textPrimary)
-            .padding(.horizontal, 13).padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.rControl, style: .continuous)
-                    .fill(Color.primary.opacity(configuration.isPressed ? 0.13 : 0.07))
-            )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.snappy(duration: 0.12), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Brand motifs
-
-/// A 3pt accent bar marking a selected row's leading edge — the signature motif.
-struct AccentSpine: View {
-    var body: some View {
-        Capsule(style: .continuous)
-            .fill(Brand.spine)
-            .frame(width: 3)
-            .frame(maxHeight: .infinity)
     }
 }
