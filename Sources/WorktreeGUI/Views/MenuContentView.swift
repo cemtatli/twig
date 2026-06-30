@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import WorktreeCore
 
 struct MenuContentView: View {
@@ -163,9 +164,10 @@ struct MenuContentView: View {
                 if state.isRefreshing { ProgressView().controlSize(.small) }
                 Spacer()
                 Button { state.refresh() } label: { Image(systemName: "arrow.clockwise") }
-                    .buttonStyle(.bordered).controlSize(.small).help("Yenile")
+                    .buttonStyle(.bordered).controlSize(.small).buttonBorderShape(.circle).help("Yenile")
                 Button { pane = .newWorktree } label: { Label("Yeni", systemImage: "plus") }
-                    .buttonStyle(.borderedProminent).controlSize(.regular).help("Yeni worktree")
+                    .buttonStyle(.borderedProminent).controlSize(.regular)
+                    .buttonBorderShape(.capsule).help("Yeni worktree")
             }
             .padding(14)
 
@@ -206,18 +208,23 @@ struct MenuContentView: View {
                 Button("Worktree") {
                     state.removeWorktree(repo: repo, worktree: wt, deleteBranch: false)
                     confirmingRemovalPath = nil
-                }.controlSize(.small)
+                }.controlSize(.small).buttonBorderShape(.capsule)
                 Button("+ Branch") {
                     state.removeWorktree(repo: repo, worktree: wt, deleteBranch: true)
                     confirmingRemovalPath = nil
-                }.controlSize(.small).tint(.red)
+                }.controlSize(.small).buttonBorderShape(.capsule).tint(.red)
                 Button { confirmingRemovalPath = nil } label: { Image(systemName: "xmark") }
-                    .controlSize(.small)
+                    .controlSize(.small).buttonBorderShape(.circle)
             } else {
-                actionButton("chevron.left.forwardslash.chevron.right", help: state.config.editorApp) {
+                appActionButton(app: state.config.editorApp,
+                                fallback: "chevron.left.forwardslash.chevron.right",
+                                help: state.config.editorApp) {
                     state.openEditor(wt.path)
                 }
-                actionButton("terminal", help: "Terminal") { state.openTerminal(wt.path) }
+                appActionButton(app: state.config.terminalApp, fallback: "terminal",
+                                help: state.config.terminalApp) {
+                    state.openTerminal(wt.path)
+                }
                 actionButton("folder", help: "Finder") { state.openFinder(wt.path) }
                 actionButton("trash", help: "Sil", tint: .red) { confirmingRemovalPath = wt.path }
             }
@@ -232,8 +239,42 @@ struct MenuContentView: View {
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
+        .buttonBorderShape(.circle)
         .tint(tint)
         .help(help)
+    }
+
+    /// Action button that shows the real macOS app icon (e.g. Cursor's logo),
+    /// falling back to an SF Symbol when the app isn't found.
+    private func appActionButton(app: String, fallback: String, help: String,
+                                 action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            if let icon = Self.appIcon(app) {
+                Image(nsImage: icon).resizable().frame(width: 17, height: 17)
+            } else {
+                Image(systemName: fallback)
+            }
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .buttonBorderShape(.circle)
+        .help(help)
+    }
+
+    private static var iconCache: [String: NSImage] = [:]
+
+    private static func appIcon(_ name: String) -> NSImage? {
+        if let cached = iconCache[name] { return cached }
+        let ws = NSWorkspace.shared
+        var path = ws.fullPath(forApplication: name)
+        if path == nil {
+            let guess = "/Applications/\(name).app"
+            if FileManager.default.fileExists(atPath: guess) { path = guess }
+        }
+        guard let path else { return nil }
+        let icon = ws.icon(forFile: path)
+        iconCache[name] = icon
+        return icon
     }
 
     private var emptyState: some View {
