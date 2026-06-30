@@ -4,3 +4,6 @@
 DerivedData/
 
 .superpowers/
+
+# Built app bundle
+WorktreeGUI.app/
