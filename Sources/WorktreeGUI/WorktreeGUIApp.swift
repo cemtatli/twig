@@ -6,9 +6,11 @@ struct WorktreeGUIApp: App {
     @StateObject private var state = AppState()
 
     var body: some Scene {
-        MenuBarExtra("Worktrees", systemImage: "arrow.triangle.branch") {
+        MenuBarExtra {
             MenuContentView().environmentObject(state)
                 .preferredColorScheme(.dark)
+        } label: {
+            Image(nsImage: JigGlyph.menuBarImage())
         }
         .menuBarExtraStyle(.window)
     }
