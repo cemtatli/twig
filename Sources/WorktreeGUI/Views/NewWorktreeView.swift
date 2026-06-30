@@ -28,7 +28,7 @@ struct NewWorktreeView: View {
                 Picker("Branch", selection: $existingBranch) {
                     ForEach(branches, id: \.self) { Text($0).tag($0) }
                 }
-                .onChange(of: existingBranch) { _, new in if taskName.isEmpty { taskName = new } }
+                .onChange(of: existingBranch) { _, new in taskName = new }
             } else {
                 TextField("Yeni branch adı", text: $newBranch)
                     .onChange(of: newBranch) { _, new in taskName = new }

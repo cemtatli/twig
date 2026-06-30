@@ -53,7 +53,10 @@ final class AppState: ObservableObject {
                     self?.refresh()
                 }
             } catch {
-                await MainActor.run { self?.lastError = "\(error)" }
+                await MainActor.run {
+                    self?.lastError = "\(error)"
+                    self?.refresh()
+                }
             }
         }
     }

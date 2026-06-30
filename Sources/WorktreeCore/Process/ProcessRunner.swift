@@ -38,8 +38,16 @@ public struct SystemProcessRunner: ProcessRunner {
         process.standardError = errPipe
 
         try process.run()
-        let outData = outPipe.fileHandleForReading.readDataToEndOfFile()
-        let errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+
+        // Drain both pipes concurrently — reading one to EOF before the other
+        // deadlocks when the undrained pipe fills its OS buffer (~64KB).
+        var outData = Data()
+        var errData = Data()
+        let group = DispatchGroup()
+        let queue = DispatchQueue(label: "ProcessRunner.drain", attributes: .concurrent)
+        queue.async(group: group) { outData = outPipe.fileHandleForReading.readDataToEndOfFile() }
+        queue.async(group: group) { errData = errPipe.fileHandleForReading.readDataToEndOfFile() }
+        group.wait()
         process.waitUntilExit()
 
         return ProcessResult(

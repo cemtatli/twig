@@ -5,6 +5,8 @@ struct MenuContentView: View {
     @EnvironmentObject var state: AppState
     @State private var newWorktreeRepo: Repo?
     @State private var showSettings = false
+    @State private var pendingRemoval: (repo: Repo, worktree: Worktree)?
+    @State private var showRemoveDialog = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -40,6 +42,20 @@ struct MenuContentView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView().environmentObject(state)
         }
+        .confirmationDialog(
+            pendingRemoval.map { "\"\($0.worktree.branch)\" worktree'sini sil" } ?? "Worktree'yi sil",
+            isPresented: $showRemoveDialog, titleVisibility: .visible
+        ) {
+            if let pending = pendingRemoval {
+                Button("Worktree'yi sil", role: .destructive) {
+                    state.removeWorktree(repo: pending.repo, worktree: pending.worktree, deleteBranch: false)
+                }
+                Button("Worktree + branch'i sil", role: .destructive) {
+                    state.removeWorktree(repo: pending.repo, worktree: pending.worktree, deleteBranch: true)
+                }
+                Button("İptal", role: .cancel) { }
+            }
+        }
     }
 
     @ViewBuilder
@@ -58,7 +74,8 @@ struct MenuContentView: View {
                     Button("Terminal") { state.openTerminal(wt.path) }
                     Button("Finder") { state.openFinder(wt.path) }
                     Button(role: .destructive) {
-                        state.removeWorktree(repo: repo, worktree: wt, deleteBranch: false)
+                        pendingRemoval = (repo, wt)
+                        showRemoveDialog = true
                     } label: { Image(systemName: "trash") }
                 }
                 .padding(.leading, 8)

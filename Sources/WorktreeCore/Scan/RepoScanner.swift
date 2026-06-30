@@ -15,7 +15,7 @@ public struct RepoScanner {
         }
         for m in manual {
             let path = Config.expandTilde(m)
-            if found[path] == nil, isRepo(path) {
+            if found[path] == nil, isBaseRepo(path) {
                 found[path] = makeRepo(path)
             }
         }
@@ -23,22 +23,26 @@ public struct RepoScanner {
     }
 
     private func walk(dir: String, depthLeft: Int, into found: inout [String: Repo]) {
-        if isRepo(dir) {
-            found[dir] = makeRepo(dir)
-            return
+        var isDir: ObjCBool = false
+        if fileManager.fileExists(atPath: dir + "/.git", isDirectory: &isDir) {
+            if isDir.boolValue {
+                found[dir] = makeRepo(dir)   // base repo (.git directory)
+            }
+            return   // stop: base repo OR worktree (.git file) — never descend further
         }
         guard depthLeft > 0 else { return }
         guard let entries = try? fileManager.contentsOfDirectory(atPath: dir) else { return }
         for entry in entries where !entry.hasPrefix(".") {
             let child = dir + "/" + entry
-            var isDir: ObjCBool = false
-            guard fileManager.fileExists(atPath: child, isDirectory: &isDir), isDir.boolValue else { continue }
+            var childIsDir: ObjCBool = false
+            guard fileManager.fileExists(atPath: child, isDirectory: &childIsDir), childIsDir.boolValue else { continue }
             walk(dir: child, depthLeft: depthLeft - 1, into: &found)
         }
     }
 
-    private func isRepo(_ dir: String) -> Bool {
-        fileManager.fileExists(atPath: dir + "/.git")
+    private func isBaseRepo(_ dir: String) -> Bool {
+        var isDir: ObjCBool = false
+        return fileManager.fileExists(atPath: dir + "/.git", isDirectory: &isDir) && isDir.boolValue
     }
 
     private func makeRepo(_ path: String) -> Repo {

@@ -55,11 +55,11 @@ final class RepoScannerTests: XCTestCase {
         XCTAssertFalse(repos.contains { $0.path == notARepo })
     }
 
-    func testDetectsGitFileWorktreeRepo() throws {
+    func testSkipsGitFileWorktree() throws {
         try makeDir("worktree-style")
         try "gitdir: /some/base/.git/worktrees/x".write(
             toFile: root + "/worktree-style/.git", atomically: true, encoding: .utf8)
         let repos = RepoScanner().scan(roots: [root], depth: 3, manual: [])
-        XCTAssertTrue(repos.contains { $0.path == root + "/worktree-style" })
+        XCTAssertFalse(repos.contains { $0.path == root + "/worktree-style" })
     }
 }
