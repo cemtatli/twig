@@ -20,30 +20,45 @@ struct MenuContentView: View {
                 Button("Ayarlar") { openInFront(id: "settings") }
             }
 
+            HStack(spacing: 8) {
+                Button {
+                    state.addReposViaPanel()
+                } label: {
+                    Label("Repo Ekle", systemImage: "folder.badge.plus")
+                }
+                Spacer()
+                if state.isRefreshing {
+                    ProgressView().controlSize(.small)
+                }
+                Text("\(state.repos.count) repo")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             if let err = state.lastError {
                 Text(err).font(.caption).foregroundStyle(.red).lineLimit(3)
             }
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 6) {
-                    if state.repos.isEmpty {
-                        HStack(spacing: 6) {
-                            if state.isRefreshing {
-                                ProgressView().controlSize(.small)
-                                Text("Yükleniyor…").font(.caption).foregroundStyle(.secondary)
-                            } else {
-                                Text("Repo bulunamadı. Ayarlar'dan tarama kökünü kontrol et.")
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
+                    if state.repos.isEmpty && !state.isRefreshing {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Repo yok.").font(.caption).foregroundStyle(.secondary)
+                            Text("“Repo Ekle” ile Finder'dan bir klasör seç,")
+                                .font(.caption2).foregroundStyle(.secondary)
+                            Text("ya da tarama kökleri: \(state.config.scanRoots.joined(separator: ", "))")
+                                .font(.caption2).foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 6)
                     }
                     ForEach(state.repos) { repo in
                         repoSection(repo)
                     }
+                    Spacer(minLength: 0)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxHeight: 360)
+            .frame(height: 360)   // explicit height: a maxHeight-only ScrollView
+                                  // collapses to ~0 inside the self-sizing popover
 
             Divider()
             Button("Çıkış") { NSApplication.shared.terminate(nil) }

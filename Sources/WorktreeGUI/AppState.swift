@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AppKit
 import WorktreeCore
 
 @MainActor
@@ -21,6 +22,7 @@ final class AppState: ObservableObject {
         let store = ConfigStore(path: ConfigStore.defaultPath)
         self.store = store
         self.config = (try? store.load()) ?? .default
+        refresh()   // populate eagerly so the first menu open is instant
     }
 
     func refresh() {
@@ -82,6 +84,40 @@ final class AppState: ObservableObject {
             if deleteBranch { try? git.deleteBranch(repoPath: repo.path, branch: worktree.branch) }
             refresh()
         } catch { lastError = "\(error)" }
+    }
+
+    /// Open a Finder panel to add repos. A chosen folder with a `.git`
+    /// directory is added as a manual repo; any other folder is added as a
+    /// scan root (it gets walked for repos inside it).
+    func addReposViaPanel() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = true
+        panel.prompt = "Ekle"
+        panel.message = "Bir repo klasörü ya da repoları içeren bir kök klasör seç"
+        panel.directoryURL = URL(fileURLWithPath: Config.expandTilde("~/Dev"))
+        guard panel.runModal() == .OK else { return }
+
+        var isDir: ObjCBool = false
+        for url in panel.urls {
+            let path = url.path
+            let isGitDir = FileManager.default.fileExists(atPath: path + "/.git", isDirectory: &isDir) && isDir.boolValue
+            if isGitDir {
+                if !config.manualRepos.contains(path) { config.manualRepos.append(path) }
+            } else {
+                if !config.scanRoots.contains(path) { config.scanRoots.append(path) }
+            }
+        }
+        saveConfig()   // persists + refresh()
+    }
+
+    /// Remove a scan root or manual repo entry (whichever matches) and refresh.
+    func removeSource(_ path: String) {
+        config.scanRoots.removeAll { $0 == path }
+        config.manualRepos.removeAll { $0 == path }
+        saveConfig()
     }
 
     func openEditor(_ path: String) { try? launcher.openInEditor(config.editorApp, path: path) }
