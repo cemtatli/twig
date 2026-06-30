@@ -26,7 +26,7 @@ struct MenuContentView: View {
         HStack(spacing: 0) {
             if !state.sidebarCollapsed {
                 sidebar
-                    .frame(width: 200)
+                    .frame(width: Theme.railWidth)
                     .background(sidebarSurface)
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 Divider()
@@ -90,20 +90,11 @@ struct MenuContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            HStack {
-                JigWordmark(size: 15)
-                Spacer()
-            }
-            .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 2)
-
-            HStack(spacing: 6) {
-                BrandBracket(size: 9)
-                Text(state.t(.sidebarRepos))
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Theme.textTertiary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 6)
+            JigMark()
+                .frame(width: 22, height: 22)
+                .foregroundStyle(Brand.signalOrange)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 14).padding(.bottom, 10)
 
             ScrollView {
                 VStack(spacing: 2) {
@@ -111,7 +102,7 @@ struct MenuContentView: View {
                         repoRow(repo, index: idx)
                     }
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 6)
                 .padding(.bottom, 8)
             }
 
@@ -131,50 +122,31 @@ struct MenuContentView: View {
     private func repoRow(_ repo: Repo, index: Int) -> some View {
         let isSelected = pane == .repo && selectedRepo?.path == repo.path
         let isHovered = hoveredRepoPath == repo.path
+        let initial = String(repo.name.prefix(1)).uppercased()
         return Button {
             withAnimation(selectAnim) { selectedRepoPath = repo.path; pane = .repo }
         } label: {
-            HStack(spacing: 9) {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(isSelected ? Theme.accent : Color.primary.opacity(0.08))
-                    .frame(width: 26, height: 26)
-                    .overlay {
-                        if index < 9 {
-                            // The shortcut number IS the icon — press 1-9 to jump here.
-                            Text("\(index + 1)")
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                .foregroundStyle(isSelected ? .white : Theme.textSecondary)
-                        } else {
-                            Image(systemName: "shippingbox.fill")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(isSelected ? .white : Theme.textSecondary)
-                        }
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isSelected ? Theme.accent : Color.primary.opacity(0.08))
+                .frame(width: 36, height: 36)
+                .overlay {
+                    Text(initial)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(isSelected ? .white : Theme.textSecondary)
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isHovered && !isSelected ? Theme.hover : .clear)
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 3)
+                .overlay(alignment: .leading) {
+                    if isSelected {
+                        AccentSpine().padding(.vertical, 6)
+                            .transition(.opacity)
                     }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(repo.name)
-                        .font(.system(size: 12.5, weight: .medium))
-                        .foregroundStyle(Theme.textPrimary)
-                        .lineLimit(1).truncationMode(.middle)
-                    Text(repo.group)
-                        .font(.system(size: 10))
-                        .foregroundStyle(Theme.textTertiary)
-                        .lineLimit(1).truncationMode(.middle)
                 }
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 8).padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.rRow, style: .continuous)
-                    .fill(isSelected ? Theme.accent.opacity(0.16)
-                          : isHovered ? Theme.hover : .clear)
-            )
-            .overlay(alignment: .leading) {
-                if isSelected {
-                    AccentSpine().padding(.vertical, 4)
-                        .transition(.opacity)
-                }
-            }
-            .contentShape(Rectangle())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hoveredRepoPath = $0 ? repo.path : (isHovered ? nil : hoveredRepoPath) }
