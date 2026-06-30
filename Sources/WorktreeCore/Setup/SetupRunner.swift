@@ -32,10 +32,17 @@ public struct SetupRunner {
                              worktreePath: String, resolver: PlaceholderResolver) throws {
         for rule in rules {
             let basePath = baseRepoPath + "/" + rule.file
-            let original = (try? String(contentsOfFile: basePath, encoding: .utf8)) ?? ""
+            let original: String
+            if fileManager.fileExists(atPath: basePath) {
+                let data = try Data(contentsOf: URL(fileURLWithPath: basePath))
+                original = String(data: data, encoding: .utf8) ?? ""
+            } else {
+                original = ""
+            }
             let resolvedValue = try resolver.resolve(rule.value)
             let updated = Self.updateEnvLine(content: original, key: rule.key, value: resolvedValue)
-            try updated.write(toFile: worktreePath + "/" + rule.file, atomically: true, encoding: .utf8)
+            try Data(updated.utf8).write(to: URL(fileURLWithPath: worktreePath + "/" + rule.file),
+                                         options: .atomic)
         }
     }
 

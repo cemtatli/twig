@@ -37,6 +37,20 @@ final class SetupRunnerTests: XCTestCase {
         XCTAssertEqual(written, "VITE_API_URL=https://student-randevu.dev.example.com/api\n")
     }
 
+    func testApplyEnvRulesWithMissingBaseFile() throws {
+        let base = NSTemporaryDirectory() + "base-\(UUID().uuidString)"   // never created
+        let wt = NSTemporaryDirectory() + "wt-\(UUID().uuidString)"
+        try FileManager.default.createDirectory(atPath: wt, withIntermediateDirectories: true)
+        let runner = SetupRunner(runner: FakeProcessRunner())
+        let resolver = PlaceholderResolver(values: ["taskName": "randevu"])
+        try runner.applyEnvRules(
+            [EnvRule(file: ".env.development", key: "VITE_API_URL",
+                     value: "https://{taskName}.dev.example.com/api")],
+            baseRepoPath: base, worktreePath: wt, resolver: resolver)
+        let written = try String(contentsOfFile: wt + "/.env.development", encoding: .utf8)
+        XCTAssertEqual(written, "\nVITE_API_URL=https://randevu.dev.example.com/api\n")
+    }
+
     func testRunCommandsExecutesInWorktreeViaShell() throws {
         let fake = FakeProcessRunner()
         let runner = SetupRunner(runner: fake)
