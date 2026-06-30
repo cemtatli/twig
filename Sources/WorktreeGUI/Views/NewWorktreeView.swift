@@ -49,8 +49,11 @@ struct NewWorktreeForm: View {
                             .textFieldStyle(.roundedBorder)
                             .onChange(of: newBranch) { _, new in taskName = new }
                     }
-                    labeled("Base branch") {
-                        TextField("ör. develop", text: $base).textFieldStyle(.roundedBorder)
+                    labeled("Base branch (kopyalanacak)") {
+                        Picker("", selection: $base) {
+                            ForEach(branches, id: \.self) { Text($0).tag($0) }
+                        }
+                        .labelsHidden()
                     }
                 }
 
@@ -100,9 +103,19 @@ struct NewWorktreeForm: View {
         .onAppear {
             branches = state.branches(for: repo)
             existingBranch = branches.first ?? ""
-            base = state.defaultBase(for: repo)
+            base = preferredBase(from: branches)
             if mode == 0 { taskName = existingBranch }
         }
+    }
+
+    /// Pick a sensible base branch: the configured default if it exists,
+    /// otherwise master, then main, then the first available branch.
+    private func preferredBase(from branches: [String]) -> String {
+        let configured = state.defaultBase(for: repo)
+        for candidate in [configured, "master", "main"] where branches.contains(candidate) {
+            return candidate
+        }
+        return branches.first ?? configured
     }
 
     @ViewBuilder
