@@ -43,7 +43,12 @@ final class AppState: ObservableObject {
                 let all = (try? git.worktrees(repoPath: repo.path)) ?? []
                 // Exclude the base repo's own checkout and any worktree whose
                 // directory no longer exists on disk.
-                map[repo.path] = all.filter { $0.path != repo.path && fm.fileExists(atPath: $0.path) }
+                let filtered = all.filter { $0.path != repo.path && fm.fileExists(atPath: $0.path) }
+                map[repo.path] = filtered.map { wt in
+                    var wt = wt
+                    wt.isDirty = (try? git.isDirty(worktreePath: wt.path)) ?? false
+                    return wt
+                }
             }
             await MainActor.run {
                 self?.repos = scanned
