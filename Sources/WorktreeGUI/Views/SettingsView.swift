@@ -13,21 +13,24 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                Text("Ayarlar").font(.title3).bold()
+                Text("Ayarlar")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
 
                 section("Repo Kaynakları",
                         "Klasör seç: içinde .git olan tek repo, diğerleri taranan kök olur.") {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 5) {
                         if state.config.scanRoots.isEmpty && state.config.manualRepos.isEmpty {
-                            Text("Henüz kaynak yok.").font(.caption).foregroundStyle(.secondary)
+                            Text("Henüz kaynak yok").font(Theme.mono(10))
+                                .foregroundStyle(Theme.textTertiary)
                         }
                         ForEach(state.config.scanRoots, id: \.self) { sourceRow($0, kind: "kök") }
                         ForEach(state.config.manualRepos, id: \.self) { sourceRow($0, kind: "repo") }
                         Button { state.addReposViaPanel() } label: {
                             Label("Finder'dan Ekle", systemImage: "folder.badge.plus")
                         }
-                        .controlSize(.small)
-                        .padding(.top, 2)
+                        .buttonStyle(GhostPill(size: 11))
+                        .padding(.top, 4)
                     }
                 }
 
@@ -61,11 +64,11 @@ struct SettingsView: View {
                     .onSubmit { state.saveConfig() }
                 }
 
-                Divider()
+                Rectangle().fill(Theme.hairline).frame(height: 1).padding(.vertical, 2)
                 Text("Env/komut kuralları için config.json'ı elle düzenle:")
-                    .font(.caption).foregroundStyle(.secondary)
-                Text(ConfigStore.defaultPath)
-                    .font(.system(.caption2, design: .monospaced)).foregroundStyle(.secondary)
+                    .font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
+                Text(ConfigStore.defaultPath.abbreviatingHome)
+                    .font(Theme.mono(9.5)).foregroundStyle(Theme.textTertiary)
                     .textSelection(.enabled)
             }
             .padding(16)
@@ -94,24 +97,31 @@ struct SettingsView: View {
     @ViewBuilder
     private func section<C: View>(_ title: String, _ subtitle: String,
                                   @ViewBuilder content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.headline)
-            Text(subtitle).font(.caption2).foregroundStyle(.secondary)
-            content()
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title.uppercased())
+                .font(Theme.mono(9, .medium)).tracking(0.5)
+                .foregroundStyle(Theme.textSecondary)
+            Text(subtitle).font(.system(size: 10.5)).foregroundStyle(Theme.textTertiary)
+            content().padding(.top, 1)
         }
     }
 
     @ViewBuilder
     private func sourceRow(_ path: String, kind: String) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Image(systemName: kind == "repo" ? "shippingbox" : "folder")
-            Text(path).font(.caption).lineLimit(1).truncationMode(.middle)
-            Text("(\(kind))").font(.caption2).foregroundStyle(.secondary)
+                .font(.system(size: 11)).foregroundStyle(Theme.textSecondary).frame(width: 14)
+            Text(path.abbreviatingHome).font(Theme.mono(10.5))
+                .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
+            Text(kind).font(Theme.mono(8.5)).foregroundStyle(Theme.textTertiary)
+                .padding(.horizontal, 5).padding(.vertical, 1)
+                .background(Capsule().fill(Theme.hover))
             Spacer()
-            Button(role: .destructive) { state.removeSource(path) } label: {
-                Image(systemName: "minus.circle")
+            Button { state.removeSource(path) } label: {
+                Image(systemName: "minus.circle.fill")
+                    .font(.system(size: 12)).foregroundStyle(Theme.danger.opacity(0.85))
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain).help("Kaldır")
         }
     }
 }

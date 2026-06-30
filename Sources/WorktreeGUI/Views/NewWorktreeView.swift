@@ -20,13 +20,13 @@ struct NewWorktreeForm: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Yeni Worktree").font(.title3).bold()
-                        Text(repo.name).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Spacer()
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Yeni Worktree")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text(repo.name).font(Theme.mono(10)).foregroundStyle(Theme.textTertiary)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Picker("", selection: $mode) {
                     Text("Var olan branch").tag(0)
@@ -46,7 +46,7 @@ struct NewWorktreeForm: View {
                 } else {
                     labeled("Yeni branch adı") {
                         TextField("ör. feat/randevu", text: $newBranch)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.roundedBorder).font(Theme.mono(12))
                             .onChange(of: newBranch) { _, new in taskName = new }
                     }
                     labeled("Base branch (kopyalanacak)") {
@@ -58,30 +58,31 @@ struct NewWorktreeForm: View {
                 }
 
                 labeled("Task adı (klasör)") {
-                    TextField("ör. randevu", text: $taskName).textFieldStyle(.roundedBorder)
+                    TextField("ör. randevu", text: $taskName)
+                        .textFieldStyle(.roundedBorder).font(Theme.mono(12))
                 }
 
                 if submitted {
                     ScrollView {
                         Text(state.log.isEmpty ? "Çalışıyor…" : state.log.joined(separator: "\n"))
-                            .font(.system(.caption, design: .monospaced))
+                            .font(Theme.mono(10)).foregroundStyle(Theme.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(8)
                     }
                     .frame(height: 120)
-                    .background(.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                    .background(Theme.hover, in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Theme.hairline, lineWidth: 1))
                     if let err = state.lastError {
-                        Text(err).font(.caption).foregroundStyle(.red).lineLimit(4)
+                        Text(err).font(Theme.mono(10)).foregroundStyle(Theme.danger).lineLimit(4)
                     }
                 }
 
-                HStack {
+                HStack(spacing: 8) {
                     if submitted {
-                        Button("Kapat") { onClose() }
-                            .buttonStyle(.borderedProminent).controlSize(.large)
+                        Button("Kapat") { onClose() }.buttonStyle(AccentPill())
                         Spacer()
                     } else {
-                        Button("Vazgeç") { onClose() }
-                            .controlSize(.large)
+                        Button("Vazgeç") { onClose() }.buttonStyle(GhostPill())
                         Spacer()
                         Button {
                             let req = WorktreeRequest(
@@ -92,10 +93,12 @@ struct NewWorktreeForm: View {
                         } label: {
                             Label("Oluştur", systemImage: "plus")
                         }
-                        .buttonStyle(.borderedProminent).controlSize(.large)
+                        .buttonStyle(AccentPill())
                         .disabled(effectiveBranch.isEmpty || taskName.isEmpty)
+                        .opacity(effectiveBranch.isEmpty || taskName.isEmpty ? 0.4 : 1)
                     }
                 }
+                .padding(.top, 4)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -120,8 +123,10 @@ struct NewWorktreeForm: View {
 
     @ViewBuilder
     private func labeled<C: View>(_ title: String, @ViewBuilder content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title.uppercased())
+                .font(Theme.mono(9, .medium)).tracking(0.5)
+                .foregroundStyle(Theme.textTertiary)
             content()
         }
     }

@@ -8,6 +8,7 @@ struct WorktreeGUIApp: App {
     var body: some Scene {
         MenuBarExtra("Worktrees", systemImage: "arrow.triangle.branch") {
             MenuContentView().environmentObject(state)
+                .preferredColorScheme(.dark)
         }
         .menuBarExtraStyle(.window)
     }
