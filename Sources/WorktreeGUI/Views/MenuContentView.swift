@@ -97,7 +97,7 @@ struct MenuContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            Text("Depolar")
+            Text(state.t(.sidebarRepos))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Theme.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,12 +115,12 @@ struct MenuContentView: View {
 
             Divider()
             HStack(spacing: 4) {
-                railButton("folder.badge.plus", label: "Repo ekle") { state.addReposViaPanel() }
-                railButton("gearshape", label: "Ayarlar", active: pane == .settings) {
+                railButton("folder.badge.plus", label: state.t(.addRepo)) { state.addReposViaPanel() }
+                railButton("gearshape", label: state.t(.settings), active: pane == .settings) {
                     withAnimation(selectAnim) { pane = .settings }
                 }
                 Spacer()
-                railButton("power", label: "Çıkış") { NSApplication.shared.terminate(nil) }
+                railButton("power", label: state.t(.quit)) { NSApplication.shared.terminate(nil) }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
         }
@@ -213,11 +213,11 @@ struct MenuContentView: View {
                     Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .medium))
                         .foregroundStyle(Theme.textSecondary)
                 }
-                .buttonStyle(.plain).help("Yenile").accessibilityLabel("Yenile")
+                .buttonStyle(.plain).help(state.t(.refresh)).accessibilityLabel(state.t(.refresh))
                 Button { withAnimation(selectAnim) { pane = .newWorktree } } label: {
-                    Label("Yeni", systemImage: "plus")
+                    Label(state.t(.new), systemImage: "plus")
                 }
-                .buttonStyle(AccentPill(size: 12)).help("Yeni worktree")
+                .buttonStyle(AccentPill(size: 12)).help(state.t(.newWorktreeHelp))
             }
             .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
 
@@ -243,7 +243,7 @@ struct MenuContentView: View {
 
             Divider()
             HStack(spacing: 0) {
-                Text(worktrees.count == 1 ? "1 worktree" : "\(worktrees.count) worktree")
+                Text(state.worktreeCountText(worktrees.count))
                     .font(.system(size: 11)).foregroundStyle(Theme.textTertiary)
                 Spacer()
                 Text(repo.path.abbreviatingHome).font(Theme.mono(10.5))
@@ -256,11 +256,12 @@ struct MenuContentView: View {
 
     private var emptyWorktrees: some View {
         VStack(spacing: 8) {
-            Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 24)).foregroundStyle(Theme.textTertiary)
-            Text("Henüz worktree yok").font(.system(size: 13, weight: .medium))
+            JigMark()
+                .frame(width: 26, height: 26)
+                .foregroundStyle(Theme.textTertiary)
+            Text(state.t(.noWorktreesYet)).font(.system(size: 13, weight: .medium))
                 .foregroundStyle(Theme.textSecondary)
-            Text("\u{201C}Yeni\u{201D} ile ilk worktree\u{2019}yi oluştur")
+            Text(state.t(.createFirstWorktree))
                 .font(.system(size: 11)).foregroundStyle(Theme.textTertiary)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 44)
@@ -283,22 +284,22 @@ struct MenuContentView: View {
             Spacer(minLength: 8)
 
             if confirmingRemovalPath == wt.path {
-                Text("Sil?").font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
-                pillButton("Worktree") {
+                Text(state.t(.deletePrompt)).font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
+                pillButton(state.t(.worktreeWord)) {
                     state.removeWorktree(repo: repo, worktree: wt, deleteBranch: false); confirmingRemovalPath = nil
                 }
-                pillButton("+ Branch", danger: true) {
+                pillButton(state.t(.branchPlus), danger: true) {
                     state.removeWorktree(repo: repo, worktree: wt, deleteBranch: true); confirmingRemovalPath = nil
                 }
-                rowAction("xmark", help: "Vazgeç") { confirmingRemovalPath = nil }
+                rowAction("xmark", help: state.t(.cancel)) { confirmingRemovalPath = nil }
             } else {
                 HStack(spacing: 4) {
                     rowAction("chevron.left.forwardslash.chevron.right",
                               help: state.config.editorApp) { state.openEditor(wt.path) }
                     rowAction("terminal",
                               help: state.config.terminalApp) { state.openTerminal(wt.path) }
-                    rowAction("folder", help: "Finder") { state.openFinder(wt.path) }
-                    rowAction("trash", help: "Sil", danger: true) { confirmingRemovalPath = wt.path }
+                    rowAction("folder", help: state.t(.finder)) { state.openFinder(wt.path) }
+                    rowAction("trash", help: state.t(.delete), danger: true) { confirmingRemovalPath = wt.path }
                 }
                 .opacity(hovered ? 1 : 0)
                 .offset(x: reduceMotion ? 0 : (hovered ? 0 : 8))
@@ -336,15 +337,14 @@ struct MenuContentView: View {
 
     private var emptyState: some View {
         VStack(spacing: 10) {
-            Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 30)).foregroundStyle(Theme.textTertiary)
-            Text("Repo yok").font(.system(size: 15, weight: .semibold))
+            JigWordmark(size: 22)
+            Text(state.t(.noRepositories)).font(.system(size: 13, weight: .medium))
                 .foregroundStyle(Theme.textSecondary)
             if state.isRefreshing {
-                HStack(spacing: 6) { ProgressView().controlSize(.small); Text("Yükleniyor…") }
+                HStack(spacing: 6) { ProgressView().controlSize(.small); Text(state.t(.loading)) }
                     .font(.system(size: 12)).foregroundStyle(Theme.textTertiary)
             } else {
-                Text("Soldaki \u{201C}Repo ekle\u{201D} ile bir klasör seç")
+                Text(state.t(.pickFolderHint))
                     .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
                 Text(state.config.scanRoots.joined(separator: ", "))
                     .font(Theme.mono(10)).foregroundStyle(Theme.textTertiary)

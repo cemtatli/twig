@@ -105,8 +105,8 @@ struct SidebarToggle: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(state.sidebarCollapsed ? "Kenar çubuğunu göster" : "Kenar çubuğunu gizle")
-        .accessibilityLabel("Kenar çubuğu")
+        .help(state.sidebarCollapsed ? state.t(.sidebarShow) : state.t(.sidebarHide))
+        .accessibilityLabel(state.t(.sidebarLabel))
     }
 }
 
