@@ -29,15 +29,11 @@ struct SettingsView: View {
                 }
 
                 section(state.t(.languageTitle), state.t(.languageCaption)) {
-                    Picker("", selection: Binding(
-                        get: { state.language },
-                        set: { state.setLanguage($0) }
-                    )) {
-                        ForEach(Language.allCases, id: \.self) { lang in
-                            Text(lang.label).tag(lang)
-                        }
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
+                    LiquidTabs(
+                        selection: Binding(get: { state.language }, set: { state.setLanguage($0) }),
+                        tabs: Language.allCases.map { (value: $0, title: $0.label) },
+                        selectedFill: .white
+                    )
                 }
 
                 section(state.t(.repoSourcesTitle), state.t(.repoSourcesCaption)) {
@@ -57,10 +53,11 @@ struct SettingsView: View {
                 }
 
                 section(state.t(.scanDepthTitle), state.t(.scanDepthCaption)) {
-                    Picker("", selection: depthBinding) {
-                        ForEach(1...5, id: \.self) { Text("\($0)").tag($0) }
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
+                    LiquidTabs(
+                        selection: depthBinding,
+                        tabs: (1...5).map { (value: $0, title: "\($0)") },
+                        selectedFill: .white
+                    )
                 }
 
                 section(state.t(.terminalTitle), state.t(.terminalCaption)) {
@@ -151,11 +148,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.primary.opacity(0.04))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .strokeBorder(Theme.hairline, lineWidth: 1)
+                        .fill(Theme.canvas)
                 )
         }
     }

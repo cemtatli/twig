@@ -142,6 +142,7 @@ enum InstalledApps {
 struct LiquidTabs<Value: Hashable>: View {
     @Binding var selection: Value
     let tabs: [(value: Value, title: String)]
+    var selectedFill: Color = Theme.accent
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var ns
 
@@ -155,13 +156,13 @@ struct LiquidTabs<Value: Hashable>: View {
                 } label: {
                     Text(tab.title)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isSel ? .white : Theme.textSecondary)
+                        .foregroundStyle(isSel ? (selectedFill == Theme.accent ? .white : Color.black) : Theme.textSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 7)
                         .contentShape(Rectangle())
                         .background {
                             if isSel {
-                                GlassIndicator().matchedGeometryEffect(id: "liquidTab", in: ns)
+                                GlassIndicator(fill: selectedFill).matchedGeometryEffect(id: "liquidTab", in: ns)
                             }
                         }
                 }
@@ -178,13 +179,14 @@ struct LiquidTabs<Value: Hashable>: View {
 
 /// The sliding selected pill — real Liquid Glass on macOS 26, solid accent before.
 private struct GlassIndicator: View {
+    var fill: Color = Theme.accent
     var body: some View {
         if #available(macOS 26.0, *) {
             Capsule(style: .continuous)
                 .fill(.clear)
-                .glassEffect(.regular.tint(Theme.accent).interactive(), in: .capsule)
+                .glassEffect(.regular.tint(fill).interactive(), in: .capsule)
         } else {
-            Capsule(style: .continuous).fill(Theme.accent)
+            Capsule(style: .continuous).fill(fill)
         }
     }
 }
