@@ -19,63 +19,72 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 10) {
                     SidebarToggle()
-                    Text("Ayarlar")
+                    Text(state.t(.settingsTitle))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                 }
 
-                section("Repo Kaynakları",
-                        "Klasör seç: içinde .git olan tek repo, diğerleri taranan kök olur.") {
+                section(state.t(.languageTitle), state.t(.languageCaption)) {
+                    Picker("", selection: Binding(
+                        get: { state.language },
+                        set: { state.setLanguage($0) }
+                    )) {
+                        ForEach(Language.allCases, id: \.self) { lang in
+                            Text(lang.label).tag(lang)
+                        }
+                    }
+                    .pickerStyle(.segmented).labelsHidden()
+                }
+
+                section(state.t(.repoSourcesTitle), state.t(.repoSourcesCaption)) {
                     VStack(alignment: .leading, spacing: 6) {
                         if state.config.scanRoots.isEmpty && state.config.manualRepos.isEmpty {
-                            Text("Henüz kaynak yok").font(.system(size: 11))
+                            Text(state.t(.noSourcesYet)).font(.system(size: 11))
                                 .foregroundStyle(Theme.textTertiary)
                         }
-                        ForEach(state.config.scanRoots, id: \.self) { sourceRow($0, kind: "kök") }
-                        ForEach(state.config.manualRepos, id: \.self) { sourceRow($0, kind: "repo") }
+                        ForEach(state.config.scanRoots, id: \.self) { sourceRow($0, kind: state.t(.kindRoot), isRepo: false) }
+                        ForEach(state.config.manualRepos, id: \.self) { sourceRow($0, kind: state.t(.kindRepo), isRepo: true) }
                         Button { state.addReposViaPanel() } label: {
-                            Label("Finder'dan Ekle", systemImage: "folder.badge.plus")
+                            Label(state.t(.addFromFinder), systemImage: "folder.badge.plus")
                         }
                         .buttonStyle(GhostPill(size: 11))
                         .padding(.top, 2)
                     }
                 }
 
-                section("Tarama Derinliği", "Kök altında kaç seviye derine bakılsın") {
+                section(state.t(.scanDepthTitle), state.t(.scanDepthCaption)) {
                     Picker("", selection: depthBinding) {
                         ForEach(1...5, id: \.self) { Text("\($0)").tag($0) }
                     }
                     .pickerStyle(.segmented).labelsHidden()
                 }
 
-                section("Terminal", "Worktree hangi terminalde açılsın") {
+                section(state.t(.terminalTitle), state.t(.terminalCaption)) {
                     Picker("", selection: appBinding(\.terminalApp)) {
                         ForEach(options(state.config.terminalApp, terminals), id: \.self) { Text($0).tag($0) }
                     }
                     .labelsHidden()
                 }
 
-                section("Editör", "Worktree hangi editörde açılsın") {
+                section(state.t(.editorTitle), state.t(.editorCaption)) {
                     Picker("", selection: appBinding(\.editorApp)) {
                         ForEach(options(state.config.editorApp, editors), id: \.self) { Text($0).tag($0) }
                     }
                     .labelsHidden()
                 }
 
-                section("Paket Yöneticisi",
-                        "Seçili repolarda worktree oluşunca install çalışır, sonra dev sunucusu terminalde açılır.") {
+                section(state.t(.packageManagerTitle), state.t(.packageManagerCaption)) {
                     VStack(alignment: .leading, spacing: 8) {
                         if state.repos.isEmpty {
-                            Text("Repo bulunamadı").font(.system(size: 11))
+                            Text(state.t(.noReposFound)).font(.system(size: 11))
                                 .foregroundStyle(Theme.textTertiary)
                         }
                         ForEach(state.repos) { repo in packageManagerRow(repo) }
                     }
                 }
 
-                section("Terminal Başlangıç Komutu",
-                        "Terminal açılınca worktree'de çalışır (opsiyonel). Enter ile kaydet.") {
-                    TextField("ör. npm run dev", text: Binding(
+                section(state.t(.startupCommandTitle), state.t(.startupCommandCaption)) {
+                    TextField(state.t(.startupPlaceholder), text: Binding(
                         get: { state.config.terminalStartupCommand },
                         set: { state.config.terminalStartupCommand = $0 }
                     ))
@@ -84,7 +93,7 @@ struct SettingsView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Env/komut kuralları için config.json'ı elle düzenle:")
+                    Text(state.t(.editConfigHint))
                         .font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
                     Text(ConfigStore.defaultPath.abbreviatingHome)
                         .font(Theme.mono(10)).foregroundStyle(Theme.textTertiary)
@@ -145,9 +154,9 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private func sourceRow(_ path: String, kind: String) -> some View {
+    private func sourceRow(_ path: String, kind: String, isRepo: Bool) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: kind == "repo" ? "shippingbox" : "folder")
+            Image(systemName: isRepo ? "shippingbox" : "folder")
                 .font(.system(size: 11)).foregroundStyle(Theme.textSecondary).frame(width: 14)
             Text(path.abbreviatingHome).font(Theme.mono(10.5))
                 .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
@@ -159,7 +168,7 @@ struct SettingsView: View {
                 Image(systemName: "minus.circle.fill")
                     .font(.system(size: 12)).foregroundStyle(Theme.danger.opacity(0.85))
             }
-            .buttonStyle(.plain).help("Kaldır")
+            .buttonStyle(.plain).help(state.t(.remove))
         }
     }
 
@@ -172,7 +181,7 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.textPrimary).lineLimit(1).truncationMode(.middle)
             Spacer()
             Picker("", selection: pmBinding(repo)) {
-                Text("Yok").tag("none")
+                Text(state.t(.pmNone)).tag("none")
                 ForEach(PackageManager.allCases, id: \.self) { pm in
                     Text(pm.label).tag(pm.rawValue)
                 }
