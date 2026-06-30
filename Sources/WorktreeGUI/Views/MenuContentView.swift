@@ -255,6 +255,9 @@ struct MenuContentView: View {
     private func worktreeRow(repo: Repo, wt: Worktree) -> some View {
         let hovered = hoveredPath == wt.path
         HStack(spacing: 11) {
+            Circle()
+                .fill(wt.isDirty ? Theme.dotDirty : Theme.dotClean)
+                .frame(width: 6, height: 6)
             Image(systemName: "arrow.triangle.branch")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(hovered ? Theme.accent : Theme.textTertiary)
