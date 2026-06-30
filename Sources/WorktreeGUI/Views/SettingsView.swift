@@ -150,7 +150,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Theme.canvas)
+                        .fill(Theme.surfaceRaised)
                 )
         }
     }

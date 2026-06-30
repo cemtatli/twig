@@ -27,6 +27,10 @@ enum Theme {
     // MARK: Canvas — flat near-black surface (replaces native vibrancy)
     static let canvas = Color(red: 0.05, green: 0.05, blue: 0.055)
 
+    /// One step lighter than `canvas` — gives cards/rows visible separation
+    /// from the page behind them instead of sitting at the identical tone.
+    static let surfaceRaised = Color(red: 0.11, green: 0.11, blue: 0.12)
+
     // MARK: Layout
     static let railWidth: CGFloat = 64
 
