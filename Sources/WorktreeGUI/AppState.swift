@@ -61,6 +61,14 @@ final class AppState: ObservableObject {
         config.repos["\(repo.group)/\(repo.name)"]?.defaultBase ?? config.defaults.defaultBase
     }
 
+    var language: Language { Language.from(config.language) }
+    func t(_ key: L10nKey) -> String { L10n.string(key, language: language) }
+    func worktreeCountText(_ n: Int) -> String { L10n.worktreeCount(n, language: language) }
+    func setLanguage(_ lang: Language) {
+        config.language = lang.rawValue
+        saveConfig()
+    }
+
     func packageManager(for repo: Repo) -> PackageManager? {
         guard let raw = config.repos["\(repo.group)/\(repo.name)"]?.packageManager else { return nil }
         return PackageManager(rawValue: raw)
@@ -91,7 +99,7 @@ final class AppState: ObservableObject {
                     // open a terminal in the worktree running the dev server so it
                     // "arrives running".
                     if let pm, let self {
-                        self.log.append("$ \(pm.devCommand)  (terminalde)")
+                        self.log.append("$ \(pm.devCommand)  (in terminal)")
                         try? self.launcher.openInTerminal(self.config.terminalApp,
                                                           path: wt.path,
                                                           startupCommand: pm.devCommand)
@@ -124,8 +132,8 @@ final class AppState: ObservableObject {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = true
-        panel.prompt = "Ekle"
-        panel.message = "Bir repo klasörü ya da repoları içeren bir kök klasör seç"
+        panel.prompt = t(.addPanelPrompt)
+        panel.message = t(.addPanelMessage)
         panel.directoryURL = URL(fileURLWithPath: Config.expandTilde("~/Dev"))
         guard panel.runModal() == .OK else { return }
 
