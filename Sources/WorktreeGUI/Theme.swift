@@ -143,6 +143,7 @@ struct LiquidTabs<Value: Hashable>: View {
     @Binding var selection: Value
     let tabs: [(value: Value, title: String)]
     var selectedFill: Color = Theme.accent
+    var selectedTextColor: Color = .white
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var ns
 
@@ -156,7 +157,7 @@ struct LiquidTabs<Value: Hashable>: View {
                 } label: {
                     Text(tab.title)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(isSel ? (selectedFill == Theme.accent ? .white : Color.black) : Theme.textSecondary)
+                        .foregroundStyle(isSel ? selectedTextColor : Theme.textSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 7)
                         .contentShape(Rectangle())

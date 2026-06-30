@@ -32,7 +32,8 @@ struct SettingsView: View {
                     LiquidTabs(
                         selection: Binding(get: { state.language }, set: { state.setLanguage($0) }),
                         tabs: Language.allCases.map { (value: $0, title: $0.label) },
-                        selectedFill: .white
+                        selectedFill: .white,
+                        selectedTextColor: .black
                     )
                 }
 
@@ -56,7 +57,8 @@ struct SettingsView: View {
                     LiquidTabs(
                         selection: depthBinding,
                         tabs: (1...5).map { (value: $0, title: "\($0)") },
-                        selectedFill: .white
+                        selectedFill: .white,
+                        selectedTextColor: .black
                     )
                 }
 
