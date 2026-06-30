@@ -19,6 +19,10 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 10) {
                     SidebarToggle()
+                    if state.sidebarCollapsed {
+                        JigMark().frame(width: 18, height: 18)
+                            .foregroundStyle(Brand.signalOrange)
+                    }
                     Text(state.t(.settingsTitle))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)

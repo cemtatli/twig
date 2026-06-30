@@ -97,6 +97,12 @@ struct MenuContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
+            HStack {
+                JigWordmark(size: 15)
+                Spacer()
+            }
+            .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 2)
+
             HStack(spacing: 6) {
                 BrandBracket(size: 9)
                 Text(state.t(.sidebarRepos))
@@ -208,6 +214,10 @@ struct MenuContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 8) {
                 SidebarToggle()
+                if state.sidebarCollapsed {
+                    JigMark().frame(width: 18, height: 18)
+                        .foregroundStyle(Brand.signalOrange)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(repo.name)
                         .font(.system(size: 16, weight: .semibold))

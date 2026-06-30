@@ -22,6 +22,10 @@ struct NewWorktreeForm: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 10) {
                     SidebarToggle()
+                    if state.sidebarCollapsed {
+                        JigMark().frame(width: 18, height: 18)
+                            .foregroundStyle(Brand.signalOrange)
+                    }
                     VStack(alignment: .leading, spacing: 3) {
                         Text(state.t(.newWorktreeTitle))
                             .font(.system(size: 16, weight: .semibold))
