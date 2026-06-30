@@ -7,7 +7,6 @@ final class RepoScannerTests: XCTestCase {
     override func setUpWithError() throws {
         root = NSTemporaryDirectory() + "wt-scan-\(UUID().uuidString)"
         // <root>/example_repos/example-admin/.git  (repo)
-        // <root>/example_repos/task/admin/randevu/.git (gizli .worktrees yerine derin git -> bulunmalı ama derinlik sınırı içinde)
         // <root>/.hidden/repo/.git (atlanmalı)
         // <root>/plain  (repo değil)
         try makeRepo("example_repos/example-admin")
@@ -47,5 +46,20 @@ final class RepoScannerTests: XCTestCase {
         let paths = repos.map(\.path)
         XCTAssertEqual(paths.filter { $0 == manual }.count, 1)
         XCTAssertTrue(paths.contains(extra))
+    }
+
+    func testManualNonRepoPathIsNotAdded() throws {
+        let notARepo = root + "/just-a-folder"
+        try makeDir("just-a-folder")   // no .git inside
+        let repos = RepoScanner().scan(roots: [root], depth: 3, manual: [notARepo])
+        XCTAssertFalse(repos.contains { $0.path == notARepo })
+    }
+
+    func testDetectsGitFileWorktreeRepo() throws {
+        try makeDir("worktree-style")
+        try "gitdir: /some/base/.git/worktrees/x".write(
+            toFile: root + "/worktree-style/.git", atomically: true, encoding: .utf8)
+        let repos = RepoScanner().scan(roots: [root], depth: 3, manual: [])
+        XCTAssertTrue(repos.contains { $0.path == root + "/worktree-style" })
     }
 }
