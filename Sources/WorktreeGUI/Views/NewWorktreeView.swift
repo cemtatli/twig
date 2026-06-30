@@ -23,7 +23,7 @@ struct NewWorktreeForm: View {
                 HStack(spacing: 10) {
                     SidebarToggle()
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Yeni Worktree")
+                        Text(state.t(.newWorktreeTitle))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
                         Text(repo.name).font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
@@ -33,12 +33,12 @@ struct NewWorktreeForm: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 LiquidTabs(selection: $mode,
-                           tabs: [(0, "Var olan branch"), (1, "Yeni branch")])
+                           tabs: [(0, state.t(.existingBranch)), (1, state.t(.newBranchTab))])
                     .disabled(submitted)
                     .opacity(submitted ? 0.5 : 1)
 
                 if mode == 0 {
-                    labeled("Branch") {
+                    labeled(state.t(.branch)) {
                         Picker("", selection: $existingBranch) {
                             ForEach(branches, id: \.self) { Text($0).tag($0) }
                         }
@@ -46,12 +46,12 @@ struct NewWorktreeForm: View {
                         .onChange(of: existingBranch) { _, new in taskName = new }
                     }
                 } else {
-                    labeled("Yeni branch adı") {
-                        TextField("ör. feat/randevu", text: $newBranch)
+                    labeled(state.t(.newBranchName)) {
+                        TextField(state.t(.branchPlaceholder), text: $newBranch)
                             .textFieldStyle(.roundedBorder).font(Theme.mono(12))
                             .onChange(of: newBranch) { _, new in taskName = new }
                     }
-                    labeled("Base branch (kopyalanacak)") {
+                    labeled(state.t(.baseBranch)) {
                         Picker("", selection: $base) {
                             ForEach(branches, id: \.self) { Text($0).tag($0) }
                         }
@@ -59,14 +59,14 @@ struct NewWorktreeForm: View {
                     }
                 }
 
-                labeled("Task adı (klasör)") {
-                    TextField("ör. randevu", text: $taskName)
+                labeled(state.t(.taskNameFolder)) {
+                    TextField(state.t(.taskPlaceholder), text: $taskName)
                         .textFieldStyle(.roundedBorder).font(Theme.mono(12))
                 }
 
                 if submitted {
                     ScrollView {
-                        Text(state.log.isEmpty ? "Çalışıyor…" : state.log.joined(separator: "\n"))
+                        Text(state.log.isEmpty ? state.t(.working) : state.log.joined(separator: "\n"))
                             .font(Theme.mono(10)).foregroundStyle(Theme.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(8)
@@ -81,10 +81,10 @@ struct NewWorktreeForm: View {
 
                 HStack(spacing: 8) {
                     if submitted {
-                        Button("Kapat") { onClose() }.buttonStyle(AccentPill())
+                        Button(state.t(.close)) { onClose() }.buttonStyle(AccentPill())
                         Spacer()
                     } else {
-                        Button("Vazgeç") { onClose() }.buttonStyle(GhostPill())
+                        Button(state.t(.cancel)) { onClose() }.buttonStyle(GhostPill())
                         Spacer()
                         Button {
                             let req = WorktreeRequest(
@@ -93,7 +93,7 @@ struct NewWorktreeForm: View {
                             state.createWorktree(req)
                             submitted = true
                         } label: {
-                            Label("Oluştur", systemImage: "plus")
+                            Label(state.t(.create), systemImage: "plus")
                         }
                         .buttonStyle(AccentPill())
                         .disabled(effectiveBranch.isEmpty || taskName.isEmpty)
