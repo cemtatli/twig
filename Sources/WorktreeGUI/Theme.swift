@@ -9,8 +9,8 @@ import AppKit
 /// with SF Mono kept for the things that are literally code — branch folders
 /// and paths. Everything sits on an 8pt rhythm.
 enum Theme {
-    // MARK: Accent + state — follow the system, don't override it
-    static let accent = Color.accentColor
+    // MARK: Accent + state — brand signal, not the system accent
+    static let accent = Brand.signalOrange
     static let danger = Color(nsColor: .systemRed)
 
     // MARK: Text ramp — semantic, adapts to appearance & accessibility
@@ -31,6 +31,15 @@ enum Theme {
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .monospaced)
     }
+}
+
+// MARK: - Brand tokens
+
+/// Jig brand tokens. The one signal color over the native graphite/vibrancy
+/// surface; everything else stays semantic + system.
+enum Brand {
+    /// #FF6A1A — the single brand accent. Primary fills, selection, positive state.
+    static let signalOrange = Color(red: 1.0, green: 0.416, blue: 0.102)
 }
 
 // MARK: - Vibrancy
