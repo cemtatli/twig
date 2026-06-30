@@ -45,6 +45,14 @@ public struct GitService {
         return result
     }
 
+    /// True if the worktree has any uncommitted changes (tracked or
+    /// untracked). `git status --porcelain` prints one line per dirty path
+    /// and nothing when clean.
+    public func isDirty(worktreePath: String) throws -> Bool {
+        let out = try git(["-C", worktreePath, "status", "--porcelain"])
+        return !out.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     public func addWorktree(repoPath: String, worktreePath: String,
                             branch: String, newBranchBase: String?) throws {
         var args = ["-C", repoPath, "worktree", "add"]

@@ -66,4 +66,37 @@ final class GitServiceTests: XCTestCase {
         try GitService(runner: fake).prune(repoPath: "/repo")
         XCTAssertEqual(fake.calls.first?.args, ["-C", "/repo", "worktree", "prune"])
     }
+
+    func testIsDirtyTrueWhenPorcelainNonEmpty() throws {
+        let fake = FakeProcessRunner()
+        fake.results = [ProcessResult(exitCode: 0, stdout: " M file.swift\n", stderr: "")]
+        XCTAssertTrue(try GitService(runner: fake).isDirty(worktreePath: "/wt/x"))
+        XCTAssertEqual(fake.calls.first?.args, ["-C", "/wt/x", "status", "--porcelain"])
+    }
+
+    func testIsDirtyFalseWhenPorcelainEmpty() throws {
+        let fake = FakeProcessRunner()
+        fake.results = [ProcessResult(exitCode: 0, stdout: "", stderr: "")]
+        XCTAssertFalse(try GitService(runner: fake).isDirty(worktreePath: "/wt/x"))
+    }
+
+    func testIsDirtyFalseWhenPorcelainWhitespaceOnly() throws {
+        let fake = FakeProcessRunner()
+        fake.results = [ProcessResult(exitCode: 0, stdout: "\n", stderr: "")]
+        XCTAssertFalse(try GitService(runner: fake).isDirty(worktreePath: "/wt/x"))
+    }
+
+    func testIsDirtyThrowsOnNonZeroExit() {
+        let fake = FakeProcessRunner()
+        fake.results = [ProcessResult(exitCode: 128, stdout: "", stderr: "fatal: not a git repo")]
+        XCTAssertThrowsError(try GitService(runner: fake).isDirty(worktreePath: "/wt/x")) { error in
+            XCTAssertEqual(error as? GitError,
+                           .command(args: ["-C", "/wt/x", "status", "--porcelain"],
+                                    exitCode: 128, stderr: "fatal: not a git repo"))
+        }
+    }
+
+    func testWorktreeIsDirtyDefaultsFalse() {
+        XCTAssertFalse(Worktree(path: "/wt/x", branch: "main").isDirty)
+    }
 }

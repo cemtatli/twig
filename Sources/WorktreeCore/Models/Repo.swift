@@ -14,10 +14,11 @@ public struct Repo: Equatable, Identifiable, Hashable {
 public struct Worktree: Equatable, Identifiable, Hashable {
     public var path: String
     public var branch: String
+    public var isDirty: Bool
     public var id: String { path }
 
-    public init(path: String, branch: String) {
-        self.path = path; self.branch = branch
+    public init(path: String, branch: String, isDirty: Bool = false) {
+        self.path = path; self.branch = branch; self.isDirty = isDirty
     }
 }
 
