@@ -23,6 +23,18 @@ struct MenuContentView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 6) {
+                    if state.repos.isEmpty {
+                        HStack(spacing: 6) {
+                            if state.isRefreshing {
+                                ProgressView().controlSize(.small)
+                                Text("Yükleniyor…").font(.caption).foregroundStyle(.secondary)
+                            } else {
+                                Text("Repo bulunamadı. Ayarlar'dan tarama kökünü kontrol et.")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 6)
+                    }
                     ForEach(state.repos) { repo in
                         repoSection(repo)
                     }

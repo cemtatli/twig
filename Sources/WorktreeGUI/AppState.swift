@@ -9,6 +9,7 @@ final class AppState: ObservableObject {
     @Published var worktreesByRepo: [String: [Worktree]] = [:]
     @Published var log: [String] = []
     @Published var lastError: String?
+    @Published var isRefreshing = false
 
     private let store: ConfigStore
     private let runner: ProcessRunner = SystemProcessRunner()
@@ -22,11 +23,24 @@ final class AppState: ObservableObject {
     }
 
     func refresh() {
-        repos = RepoScanner().scan(roots: config.scanRoots,
-                                   depth: config.scanDepth,
-                                   manual: config.manualRepos)
-        for repo in repos {
-            worktreesByRepo[repo.path] = (try? git.worktrees(repoPath: repo.path)) ?? []
+        // Scan + per-repo `git worktree list` run off the main thread so the
+        // menubar popup never freezes while many repos are inspected.
+        let config = self.config
+        isRefreshing = true
+        Task.detached { [weak self] in
+            let scanned = RepoScanner().scan(roots: config.scanRoots,
+                                             depth: config.scanDepth,
+                                             manual: config.manualRepos)
+            let git = GitService(runner: SystemProcessRunner())
+            var map: [String: [Worktree]] = [:]
+            for repo in scanned {
+                map[repo.path] = (try? git.worktrees(repoPath: repo.path)) ?? []
+            }
+            await MainActor.run {
+                self?.repos = scanned
+                self?.worktreesByRepo = map
+                self?.isRefreshing = false
+            }
         }
     }
 
