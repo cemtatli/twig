@@ -56,6 +56,22 @@ public struct GitService {
         try git(args)
     }
 
+    /// Fetches a single branch from origin. Non-fatal: returns false when there
+    /// is no remote or the fetch fails (e.g. offline), so creation can proceed.
+    @discardableResult
+    public func fetch(repoPath: String, branch: String) -> Bool {
+        guard let r = try? runner.run("git", ["-C", repoPath, "fetch", "origin", branch], cwd: nil)
+        else { return false }
+        return r.exitCode == 0
+    }
+
+    /// True if a ref (e.g. `origin/master`) resolves in the repo.
+    public func hasRef(repoPath: String, ref: String) -> Bool {
+        guard let r = try? runner.run("git", ["-C", repoPath, "rev-parse", "--verify", "--quiet", ref], cwd: nil)
+        else { return false }
+        return r.exitCode == 0
+    }
+
     public func removeWorktree(repoPath: String, worktreePath: String) throws {
         try git(["-C", repoPath, "worktree", "remove", worktreePath])
     }

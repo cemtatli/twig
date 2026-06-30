@@ -20,11 +20,15 @@ struct NewWorktreeForm: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Yeni Worktree")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text(repo.name).font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
+                HStack(spacing: 10) {
+                    SidebarToggle()
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Yeni Worktree")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Theme.textPrimary)
+                        Text(repo.name).font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
+                    }
+                    Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

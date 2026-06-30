@@ -25,13 +25,21 @@ struct MenuContentView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            sidebar
-                .frame(width: 184)
-                .background(sidebarSurface)
-            Divider()
-            detail
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(detailSurface)
+            if !state.sidebarCollapsed {
+                sidebar
+                    .frame(width: 200)
+                    .background(sidebarSurface)
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+                Divider()
+            }
+            ZStack {
+                detailSurface
+                detail
+                    .id(pane)
+                    .transition(paneTransition)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
         }
         .frame(width: 560, height: 580)
         .focusable()
@@ -40,6 +48,12 @@ struct MenuContentView: View {
         .onKeyPress(action: handleKey)
         .onAppear { state.refresh(); navFocused = true }
         .onChange(of: pane) { _, new in if new != .newWorktree { navFocused = true } }
+    }
+
+    private var paneTransition: AnyTransition {
+        reduceMotion ? .opacity
+            : .asymmetric(insertion: .opacity.combined(with: .offset(x: 14)),
+                          removal: .opacity)
     }
 
     // MARK: Surfaces — native vibrancy, solid fallback under Reduce Transparency
@@ -122,11 +136,18 @@ struct MenuContentView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(isSelected ? Theme.accent : Color.primary.opacity(0.08))
                     .frame(width: 26, height: 26)
-                    .overlay(
-                        Image(systemName: "shippingbox.fill")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(isSelected ? .white : Theme.textSecondary)
-                    )
+                    .overlay {
+                        if index < 9 {
+                            // The shortcut number IS the icon — press 1-9 to jump here.
+                            Text("\(index + 1)")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundStyle(isSelected ? .white : Theme.textSecondary)
+                        } else {
+                            Image(systemName: "shippingbox.fill")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(isSelected ? .white : Theme.textSecondary)
+                        }
+                    }
                 VStack(alignment: .leading, spacing: 1) {
                     Text(repo.name)
                         .font(.system(size: 12.5, weight: .medium))
@@ -137,8 +158,7 @@ struct MenuContentView: View {
                         .foregroundStyle(Theme.textTertiary)
                         .lineLimit(1).truncationMode(.middle)
                 }
-                Spacer(minLength: 4)
-                if index < 9 { shortcutKeycap(index + 1, selected: isSelected) }
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, 8).padding(.vertical, 6)
             .background(
@@ -151,23 +171,6 @@ struct MenuContentView: View {
         .buttonStyle(.plain)
         .onHover { hoveredRepoPath = $0 ? repo.path : (isHovered ? nil : hoveredRepoPath) }
         .help("\(repo.group)/\(repo.name)  ·  \(index + 1)")
-    }
-
-    /// Small keycap showing the repo's 1-9 keyboard shortcut — a quiet hint,
-    /// tinted accent when the repo is selected.
-    private func shortcutKeycap(_ n: Int, selected: Bool) -> some View {
-        Text("\(n)")
-            .font(.system(size: 10, weight: .medium, design: .rounded))
-            .foregroundStyle(selected ? Theme.accent : Theme.textTertiary)
-            .frame(width: 17, height: 17)
-            .background(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(Color.primary.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .strokeBorder(Theme.hairline, lineWidth: 1)
-                    )
-            )
     }
 
     private func railButton(_ symbol: String, label: String, active: Bool = false,
@@ -194,7 +197,8 @@ struct MenuContentView: View {
 
     private func repoDetail(_ repo: Repo) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
+                SidebarToggle()
                 VStack(alignment: .leading, spacing: 2) {
                     Text(repo.name)
                         .font(.system(size: 16, weight: .semibold))

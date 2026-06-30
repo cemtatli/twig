@@ -1,5 +1,14 @@
 import Foundation
 
+/// A repo's package manager. Drives the install command run at worktree
+/// creation and the dev command auto-started in a terminal afterwards.
+public enum PackageManager: String, Codable, CaseIterable {
+    case yarn, npm
+    public var installCommand: String { self == .yarn ? "yarn install" : "npm install" }
+    public var devCommand: String { self == .yarn ? "yarn dev" : "npm run dev" }
+    public var label: String { self == .yarn ? "Yarn" : "npm" }
+}
+
 public struct EnvRule: Codable, Equatable {
     public var file: String
     public var key: String
@@ -16,11 +25,15 @@ public struct RepoSettings: Codable, Equatable {
     public var defaultBase: String?
     public var envRules: [EnvRule]?
     public var setupCommands: [String]?
+    /// "yarn" / "npm" — runs install on create and dev in a terminal after.
+    public var packageManager: String?
 
     public init(type: String? = nil, worktreePath: String? = nil, defaultBase: String? = nil,
-                envRules: [EnvRule]? = nil, setupCommands: [String]? = nil) {
+                envRules: [EnvRule]? = nil, setupCommands: [String]? = nil,
+                packageManager: String? = nil) {
         self.type = type; self.worktreePath = worktreePath; self.defaultBase = defaultBase
         self.envRules = envRules; self.setupCommands = setupCommands
+        self.packageManager = packageManager
     }
 }
 

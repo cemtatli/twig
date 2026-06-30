@@ -75,6 +75,53 @@ struct AccentPill: ButtonStyle {
     }
 }
 
+// MARK: - Sidebar toggle
+
+/// Collapses / expands the source-list sidebar. Lives in every pane header so
+/// the sidebar can always be toggled regardless of which pane is showing.
+struct SidebarToggle: View {
+    @EnvironmentObject var state: AppState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button {
+            withAnimation(reduceMotion ? nil : .snappy(duration: 0.28)) {
+                state.sidebarCollapsed.toggle()
+            }
+        } label: {
+            Image(systemName: "sidebar.leading")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(Theme.textSecondary)
+                .frame(width: 26, height: 24)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(state.sidebarCollapsed ? "Kenar çubuğunu göster" : "Kenar çubuğunu gizle")
+        .accessibilityLabel("Kenar çubuğu")
+    }
+}
+
+// MARK: - Installed-app discovery
+
+/// Resolves which terminal / editor apps are actually installed, so pickers
+/// only offer real choices instead of a fixed menu. The candidate names are
+/// just the universe to probe — what's shown is filtered to this machine.
+enum InstalledApps {
+    static let terminals = ["Terminal", "iTerm", "Warp", "Ghostty", "kitty",
+                            "Alacritty", "WezTerm", "Hyper", "Tabby", "cmux"]
+    static let editors = ["Cursor", "Visual Studio Code", "VSCodium", "Zed",
+                          "Sublime Text", "Nova", "Xcode", "Fleet", "Windsurf"]
+
+    static func installed(_ candidates: [String]) -> [String] {
+        candidates.filter(isInstalled)
+    }
+
+    static func isInstalled(_ appName: String) -> Bool {
+        if NSWorkspace.shared.fullPath(forApplication: appName) != nil { return true }
+        return FileManager.default.fileExists(atPath: "/Applications/\(appName).app")
+    }
+}
+
 // MARK: - Liquid Glass tabs
 
 /// A tab selector whose selected indicator is a Liquid Glass capsule that

@@ -12,6 +12,7 @@ final class AppState: ObservableObject {
     @Published var lastError: String?
     @Published var isRefreshing = false
     @Published var newWorktreeRepoPath: String?   // repo to show in the New Worktree window
+    @Published var sidebarCollapsed = false
 
     private let store: ConfigStore
     private let runner: ProcessRunner = SystemProcessRunner()
@@ -60,11 +61,25 @@ final class AppState: ObservableObject {
         config.repos["\(repo.group)/\(repo.name)"]?.defaultBase ?? config.defaults.defaultBase
     }
 
+    func packageManager(for repo: Repo) -> PackageManager? {
+        guard let raw = config.repos["\(repo.group)/\(repo.name)"]?.packageManager else { return nil }
+        return PackageManager(rawValue: raw)
+    }
+
+    func setPackageManager(_ pm: PackageManager?, for repo: Repo) {
+        let key = "\(repo.group)/\(repo.name)"
+        var settings = config.repos[key] ?? RepoSettings()
+        settings.packageManager = pm?.rawValue
+        config.repos[key] = settings
+        saveConfig()
+    }
+
     func createWorktree(_ req: WorktreeRequest) {
         log = []
         lastError = nil
         let creator = WorktreeCreator(config: config, git: git,
                                       setup: SetupRunner(runner: runner))
+        let pm = packageManager(for: req.repo)
         Task.detached { [weak self] in
             do {
                 let wt = try creator.create(req) { line in
@@ -72,6 +87,15 @@ final class AppState: ObservableObject {
                 }
                 await MainActor.run {
                     self?.log.append("✓ \(wt.path)")
+                    // A configured package manager means deps are now installed;
+                    // open a terminal in the worktree running the dev server so it
+                    // "arrives running".
+                    if let pm, let self {
+                        self.log.append("$ \(pm.devCommand)  (terminalde)")
+                        try? self.launcher.openInTerminal(self.config.terminalApp,
+                                                          path: wt.path,
+                                                          startupCommand: pm.devCommand)
+                    }
                     self?.refresh()
                 }
             } catch {

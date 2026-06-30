@@ -46,9 +46,22 @@ public struct WorktreeCreator {
         let path = try resolvedPath(for: req)
         let resolver = PlaceholderResolver(values: placeholderValues(for: req))
 
+        // New branch off a base: pull the base from origin first so the branch
+        // starts from the latest remote tip, not a stale local one. Non-fatal —
+        // offline / no remote falls back to the local base.
+        var base = req.newBranchBase
+        if let b = base {
+            progress("git fetch origin \(b)")
+            if git.fetch(repoPath: req.repo.path, branch: b),
+               git.hasRef(repoPath: req.repo.path, ref: "origin/\(b)") {
+                base = "origin/\(b)"
+                progress("base güncellendi → origin/\(b)")
+            }
+        }
+
         progress("git worktree add \(path)")
         try git.addWorktree(repoPath: req.repo.path, worktreePath: path,
-                            branch: req.branch, newBranchBase: req.newBranchBase)
+                            branch: req.branch, newBranchBase: base)
 
         let repoSettings = settings(for: req.repo)
         // Repo-specific rules win; otherwise fall back to the global defaults.
@@ -58,6 +71,15 @@ public struct WorktreeCreator {
             try setup.applyEnvRules(rules, baseRepoPath: req.repo.path,
                                     worktreePath: path, resolver: resolver)
         }
+        // Package-manager install (yarn/npm) runs before any custom commands so
+        // dependencies exist for them. The dev server itself is long-running and
+        // is started in a terminal by the GUI after creation, not here.
+        if let pmRaw = repoSettings?.packageManager,
+           let pm = PackageManager(rawValue: pmRaw) {
+            try setup.runCommands([pm.installCommand], worktreePath: path,
+                                  resolver: resolver, progress: progress)
+        }
+
         let commands = repoSettings?.setupCommands ?? config.defaults.setupCommands ?? []
         if !commands.isEmpty {
             try setup.runCommands(commands, worktreePath: path, resolver: resolver, progress: progress)
