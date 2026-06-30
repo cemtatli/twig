@@ -2,11 +2,29 @@ import XCTest
 @testable import WorktreeCore
 
 final class LauncherTests: XCTestCase {
-    func testOpenInEditor() throws {
-        let fake = FakeProcessRunner()
+    func testOpenInEditorUsesCursorCLI() throws {
+        let fake = FakeProcessRunner()   // default exit 0 → CLI succeeds, no fallback
         try Launcher(runner: fake).openInEditor("Cursor", path: "/wt/x")
+        XCTAssertEqual(fake.calls.count, 1)
+        XCTAssertEqual(fake.calls.first?.executable, "cursor")
+        XCTAssertEqual(fake.calls.first?.args, ["/wt/x"])
+    }
+
+    func testOpenInEditorFallsBackToOpenWhenCLIFails() throws {
+        let fake = FakeProcessRunner()
+        fake.results = [ProcessResult(exitCode: 127, stdout: "", stderr: "not found")]  // CLI missing
+        try Launcher(runner: fake).openInEditor("Cursor", path: "/wt/x")
+        XCTAssertEqual(fake.calls.count, 2)
+        XCTAssertEqual(fake.calls[0].executable, "cursor")
+        XCTAssertEqual(fake.calls[1].executable, "open")
+        XCTAssertEqual(fake.calls[1].args, ["-a", "Cursor", "/wt/x"])
+    }
+
+    func testOpenInEditorWithoutCLIUsesOpen() throws {
+        let fake = FakeProcessRunner()
+        try Launcher(runner: fake).openInEditor("Xcode", path: "/wt/x")
         XCTAssertEqual(fake.calls.first?.executable, "open")
-        XCTAssertEqual(fake.calls.first?.args, ["-a", "Cursor", "/wt/x"])
+        XCTAssertEqual(fake.calls.first?.args, ["-a", "Xcode", "/wt/x"])
     }
 
     func testOpenInTerminal() throws {

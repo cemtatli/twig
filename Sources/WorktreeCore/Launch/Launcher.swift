@@ -18,8 +18,25 @@ public struct Launcher {
         guard result.exitCode == 0 else { throw LaunchError.failed(stderr: result.stderr) }
     }
 
+    /// Opens the worktree folder in the editor. For editors with a CLI that
+    /// opens a folder as a workspace (Cursor, VS Code, Zed, Sublime), uses that
+    /// CLI; falls back to `open -a <app> <path>` if the CLI is missing/fails.
     public func openInEditor(_ editorApp: String, path: String) throws {
+        if let cli = Self.editorCLI(editorApp) {
+            let result = try runner.run(cli, [path], cwd: nil)
+            if result.exitCode == 0 { return }
+        }
         try open(["-a", editorApp, path])
+    }
+
+    static func editorCLI(_ app: String) -> String? {
+        switch app {
+        case "Cursor": return "cursor"
+        case "Visual Studio Code", "VSCode", "Code": return "code"
+        case "Zed": return "zed"
+        case "Sublime Text": return "subl"
+        default: return nil
+        }
     }
 
     /// Opens the worktree in the terminal. With a non-empty `startupCommand`,
