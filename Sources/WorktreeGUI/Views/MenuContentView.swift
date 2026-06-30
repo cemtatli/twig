@@ -127,12 +127,12 @@ struct MenuContentView: View {
             withAnimation(selectAnim) { selectedRepoPath = repo.path; pane = .repo }
         } label: {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isSelected ? Theme.accent : Color.primary.opacity(0.08))
+                .fill(isSelected ? Theme.accent : Theme.avatarColor(for: repo.name))
                 .frame(width: 36, height: 36)
                 .overlay {
                     Text(initial)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(isSelected ? .white : Theme.textSecondary)
+                        .foregroundStyle(isSelected ? .white : .white.opacity(0.85))
                 }
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)

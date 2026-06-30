@@ -47,6 +47,29 @@ enum Theme {
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .monospaced)
     }
+
+    // MARK: Rail avatar palette — deterministic per-repo hue, distinct from
+    // `accent` so an unselected badge's color is never mistaken for the
+    // selected-state signal.
+    static let avatarPalette: [Color] = [
+        Color(nsColor: .systemBlue),
+        Color(nsColor: .systemTeal),
+        Color(nsColor: .systemIndigo),
+        Color(nsColor: .systemPurple),
+        Color(nsColor: .systemPink),
+        Color(nsColor: .systemMint),
+    ]
+
+    /// Stable per-repo color hashed from the repo name. Deliberately not
+    /// `String.hashValue` — that's randomized per process, so the same repo
+    /// would get a different color on every relaunch. djb2 over UTF8 bytes
+    /// is deterministic across runs.
+    static func avatarColor(for name: String) -> Color {
+        var hash: UInt64 = 5381
+        for byte in name.utf8 { hash = ((hash << 5) &+ hash) &+ UInt64(byte) }
+        let index = Int(hash % UInt64(avatarPalette.count))
+        return avatarPalette[index].opacity(0.55)
+    }
 }
 
 // MARK: - Brand tokens
