@@ -51,6 +51,27 @@ final class SetupRunnerTests: XCTestCase {
         XCTAssertEqual(written, "VITE_API_URL=https://randevu.dev.example.com/api\n")
     }
 
+    func testApplyEnvRulesFallsBackToExampleFile() throws {
+        let base = NSTemporaryDirectory() + "base-\(UUID().uuidString)"
+        let wt = NSTemporaryDirectory() + "wt-\(UUID().uuidString)"
+        try FileManager.default.createDirectory(atPath: base, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: wt, withIntermediateDirectories: true)
+        // Only the .example exists (real .env.development is git-ignored / absent).
+        try "APP_ENV=development\nVITE_API_URL=https://old/api\n"
+            .write(toFile: base + "/.env.development.example", atomically: true, encoding: .utf8)
+
+        let runner = SetupRunner(runner: FakeProcessRunner())
+        let resolver = PlaceholderResolver(values: ["taskName": "randevu"])
+        try runner.applyEnvRules(
+            [EnvRule(file: ".env.development", key: "VITE_API_URL",
+                     value: "https://{taskName}.dev.example.com/api")],
+            baseRepoPath: base, worktreePath: wt, resolver: resolver)
+
+        // Copied from .example, with only the keyed line rewritten, written to the real file.
+        let written = try String(contentsOfFile: wt + "/.env.development", encoding: .utf8)
+        XCTAssertEqual(written, "APP_ENV=development\nVITE_API_URL=https://randevu.dev.example.com/api\n")
+    }
+
     func testRunCommandsExecutesInWorktreeViaShell() throws {
         let fake = FakeProcessRunner()
         let runner = SetupRunner(runner: fake)

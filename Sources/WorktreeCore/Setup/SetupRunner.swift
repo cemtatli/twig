@@ -31,19 +31,27 @@ public struct SetupRunner {
     public func applyEnvRules(_ rules: [EnvRule], baseRepoPath: String,
                              worktreePath: String, resolver: PlaceholderResolver) throws {
         for rule in rules {
-            let basePath = baseRepoPath + "/" + rule.file
-            let original: String
-            if fileManager.fileExists(atPath: basePath) {
-                let data = try Data(contentsOf: URL(fileURLWithPath: basePath))
-                original = String(data: data, encoding: .utf8) ?? ""
-            } else {
-                original = ""
-            }
+            let original = try baseContent(baseRepoPath: baseRepoPath, file: rule.file)
             let resolvedValue = try resolver.resolve(rule.value)
             let updated = Self.updateEnvLine(content: original, key: rule.key, value: resolvedValue)
             try Data(updated.utf8).write(to: URL(fileURLWithPath: worktreePath + "/" + rule.file),
                                          options: .atomic)
         }
+    }
+
+    /// Reads the base template for an env file. Prefers the real file, then
+    /// falls back to `<file>.example` (e.g. `.env.development.example`) since
+    /// the real env file is usually git-ignored and absent in a fresh worktree.
+    /// Empty string if neither exists.
+    private func baseContent(baseRepoPath: String, file: String) throws -> String {
+        for candidate in [file, file + ".example"] {
+            let path = baseRepoPath + "/" + candidate
+            if fileManager.fileExists(atPath: path) {
+                let data = try Data(contentsOf: URL(fileURLWithPath: path))
+                return String(data: data, encoding: .utf8) ?? ""
+            }
+        }
+        return ""
     }
 
     public func runCommands(_ commands: [String], worktreePath: String,
