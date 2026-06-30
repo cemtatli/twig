@@ -5,7 +5,6 @@ import WorktreeCore
 struct MenuContentView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     enum Pane: Equatable { case repo, settings, newWorktree }
     @State private var pane: Pane = .repo
@@ -56,16 +55,10 @@ struct MenuContentView: View {
                           removal: .opacity)
     }
 
-    // MARK: Surfaces — native vibrancy, solid fallback under Reduce Transparency
+    // MARK: Surfaces — flat near-black canvas
 
-    @ViewBuilder private var sidebarSurface: some View {
-        if reduceTransparency { Color(nsColor: .windowBackgroundColor) }
-        else { VisualEffect(material: .sidebar) }
-    }
-    @ViewBuilder private var detailSurface: some View {
-        if reduceTransparency { Color(nsColor: .windowBackgroundColor) }
-        else { VisualEffect(material: .headerView) }
-    }
+    private var sidebarSurface: some View { Theme.canvas }
+    private var detailSurface: some View { Theme.canvas }
 
     // MARK: Keyboard navigation (1-9, Tab / arrows)
 

@@ -1,13 +1,14 @@
 import SwiftUI
 import AppKit
 
-/// Design tokens, tuned to read as a first-party macOS menubar app.
+/// Design tokens for Jig's OpenUsage-inspired visual language.
 ///
-/// The surface is native vibrancy (the desktop shows through, like Control
-/// Center or the Wi-Fi popover), not a hardcoded near-black. Color follows the
-/// system accent rather than a fixed brand hue, and type is SF Pro for chrome
-/// with SF Mono kept for the things that are literally code — branch folders
-/// and paths. Everything sits on an 8pt rhythm.
+/// The surface is a flat near-black canvas (`Theme.canvas`), not native
+/// vibrancy — a deliberate departure from the system-chrome look so the app
+/// reads as its own branded dashboard. Color still centers on one signal hue
+/// (`Brand.signalOrange`); type is SF Pro for chrome with SF Mono kept for
+/// the things that are literally code — branch folders and paths. Everything
+/// sits on an 8pt rhythm.
 enum Theme {
     // MARK: Accent + state — brand signal, not the system accent
     static let accent = Brand.signalOrange
@@ -22,6 +23,17 @@ enum Theme {
     static let hover    = Brand.tintHover
     static let selected = Brand.tintSelected
     static let hairline = Color(nsColor: .separatorColor)
+
+    // MARK: Canvas — flat near-black surface (replaces native vibrancy)
+    static let canvas = Color(red: 0.05, green: 0.05, blue: 0.055)
+
+    // MARK: Layout
+    static let railWidth: CGFloat = 64
+
+    // MARK: Status dots — distinct from `accent` so a dirty dot never reads
+    // as a selection indicator.
+    static let dotClean = Color(nsColor: .systemGreen)
+    static let dotDirty = Color(nsColor: .systemRed)
 
     // MARK: Corner radii (continuous, like AppKit controls)
     static let rControl: CGFloat = 7
@@ -51,28 +63,6 @@ enum Brand {
     static let accentGradient = LinearGradient(
         colors: [signalOrange, signalDeep],
         startPoint: .top, endPoint: .bottom)
-}
-
-// MARK: - Vibrancy
-
-/// Thin wrapper over `NSVisualEffectView` so panels blend with the desktop
-/// behind the popover — the standard macOS material look. Honors the user's
-/// "Reduce transparency" setting via the caller's fallback.
-struct VisualEffect: NSViewRepresentable {
-    var material: NSVisualEffectView.Material
-    var blending: NSVisualEffectView.BlendingMode = .behindWindow
-
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let v = NSVisualEffectView()
-        v.material = material
-        v.blendingMode = blending
-        v.state = .active
-        return v
-    }
-    func updateNSView(_ v: NSVisualEffectView, context: Context) {
-        v.material = material
-        v.blendingMode = blending
-    }
 }
 
 // MARK: - Button styles
