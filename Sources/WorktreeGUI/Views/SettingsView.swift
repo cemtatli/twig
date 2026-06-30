@@ -137,12 +137,9 @@ struct SettingsView: View {
                                   @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    BrandBracket(size: 9)
-                    Text(title)
-                        .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                }
+                Text(title)
+                    .font(.system(size: 12.5, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text(subtitle).font(.system(size: 11)).foregroundStyle(Theme.textTertiary)
             }
             content()

@@ -226,17 +226,3 @@ struct AccentSpine: View {
             .frame(maxHeight: .infinity)
     }
 }
-
-/// The Jig right-angle bracket mark, for section headers and empty states.
-struct BrandBracket: View {
-    var size: CGFloat = 11
-    var body: some View {
-        Path { p in
-            p.move(to: CGPoint(x: 0, y: size))
-            p.addLine(to: CGPoint(x: 0, y: 0))
-            p.addLine(to: CGPoint(x: size, y: 0))
-        }
-        .stroke(Brand.signalOrange, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-        .frame(width: size, height: size)
-    }
-}
