@@ -82,7 +82,7 @@ public struct Config: Codable, Equatable {
         editorApp: "Cursor",
         terminalStartupCommand: "",
         repos: [:],
-        defaults: Defaults(worktreePath: "{group}/task/{type}/{taskName}", defaultBase: "main")
+        defaults: Defaults(worktreePath: "{group}/task/{type}-{taskName}", defaultBase: "main")
     )
 
     public static func expandTilde(_ path: String) -> String {

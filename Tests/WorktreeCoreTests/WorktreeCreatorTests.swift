@@ -26,7 +26,7 @@ final class WorktreeCreatorTests: XCTestCase {
                                       git: GitService(runner: FakeProcessRunner()),
                                       setup: SetupRunner(runner: FakeProcessRunner()))
         let path = try creator.resolvedPath(for: studentRequest())
-        XCTAssertEqual(path, "/Users/example/Dev/example_repos/task/student/randevu")
+        XCTAssertEqual(path, "/Users/example/Dev/example_repos/task/student-randevu")
     }
 
     func testDerivesTypeWhenNotConfigured() throws {
@@ -49,7 +49,7 @@ final class WorktreeCreatorTests: XCTestCase {
                                       setup: SetupRunner(runner: setupFake))
 
         // Create the worktree directory for env rules file write
-        let wtPath = "/Users/example/Dev/example_repos/task/student/randevu"
+        let wtPath = "/Users/example/Dev/example_repos/task/student-randevu"
         try FileManager.default.createDirectory(atPath: wtPath, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(atPath: wtPath) }
 
@@ -59,7 +59,7 @@ final class WorktreeCreatorTests: XCTestCase {
         // git worktree add çağrıldı
         XCTAssertEqual(gitFake.calls.first?.args,
                        ["-C", "/Users/example/Dev/example_repos/example-student", "worktree", "add",
-                        "/Users/example/Dev/example_repos/task/student/randevu", "randevu"])
+                        "/Users/example/Dev/example_repos/task/student-randevu", "randevu"])
         // setupCommands sh ile çalıştı
         XCTAssertEqual(setupFake.calls.first?.executable, "sh")
         XCTAssertEqual(setupFake.calls.first?.args, ["-c", "npm install"])
