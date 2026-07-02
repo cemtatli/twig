@@ -149,7 +149,9 @@ struct MenuContentView: View {
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
         }
-        .background(.ultraThinMaterial)
+        // Material değil düz tint: SwiftUI materyalleri pencere ARKASINI örnekler
+        // (kardeş katmandaki opak zemini değil), popover'da masaüstü sızıyordu.
+        .background(Color.primary.opacity(0.04))
     }
 
     /// One repo row. A custom row (not a `List`) so drag-to-reorder can use a
