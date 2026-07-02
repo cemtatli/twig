@@ -252,7 +252,8 @@ struct MenuContentView: View {
             .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
 
             if let err = state.lastError {
-                Text(err).font(Theme.mono(11)).foregroundStyle(Theme.danger).lineLimit(2)
+                Label(err, systemImage: "exclamationmark.triangle")
+                    .font(.caption).foregroundStyle(Theme.danger).lineLimit(2)
                     .padding(.horizontal, 20).padding(.bottom, 10)
             }
             Divider()
@@ -303,6 +304,8 @@ struct MenuContentView: View {
             Circle()
                 .fill(wt.isDirty ? Theme.dotDirty : Theme.dotClean)
                 .frame(width: 6, height: 6)
+                .help(state.t(wt.isDirty ? .statusDirty : .statusClean))
+                .accessibilityLabel(state.t(wt.isDirty ? .statusDirty : .statusClean))
             Image(systemName: "arrow.triangle.branch")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
@@ -334,7 +337,6 @@ struct MenuContentView: View {
                     rowAction("trash", help: state.t(.delete), danger: true) { confirmingRemovalPath = wt.path }
                 }
                 .opacity(hovered ? 1 : 0)
-                .offset(x: reduceMotion ? 0 : (hovered ? 0 : 8))
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hovered)
             }
         }
