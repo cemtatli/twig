@@ -64,6 +64,13 @@ struct MenuContentView: View {
     // MARK: Keyboard navigation (1-9, Tab / arrows)
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
+        if press.modifiers.contains(.command) {
+            switch press.characters {
+            case "q": NSApplication.shared.terminate(nil); return .handled
+            case ",": withAnimation(selectAnim) { pane = .settings }; return .handled
+            default: break
+            }
+        }
         if pane == .newWorktree { return .ignored }
         if let n = Int(press.characters), (1...9).contains(n) { selectIndex(n - 1); return .handled }
         switch press.key {
@@ -131,11 +138,14 @@ struct MenuContentView: View {
             Divider()
             HStack(spacing: 4) {
                 railButton("folder.badge.plus", label: state.t(.addRepo)) { state.addReposViaPanel() }
-                railButton("gearshape", label: state.t(.settings), active: pane == .settings) {
+                railButton("gearshape", label: state.t(.settings), active: pane == .settings,
+                           shortcut: ",") {
                     withAnimation(selectAnim) { pane = .settings }
                 }
                 Spacer()
-                railButton("power", label: state.t(.quit)) { NSApplication.shared.terminate(nil) }
+                railButton("power", label: state.t(.quit), shortcut: "q") {
+                    NSApplication.shared.terminate(nil)
+                }
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
         }
@@ -176,6 +186,22 @@ struct MenuContentView: View {
         .offset(y: isDragging ? dragTranslation : 0)
         .zIndex(isDragging ? 1 : 0)
         .help("\(group)/\(repo.name)  ·  \(globalIndex + 1)")
+        .contextMenu {
+            Button(state.t(.moveUp)) {
+                withAnimation(selectAnim) {
+                    state.moveRepo(path: repo.path, inGroup: group, toGroupIndex: posInGroup - 1)
+                }
+            }
+            .disabled(posInGroup == 0)
+            Button(state.t(.moveDown)) {
+                withAnimation(selectAnim) {
+                    state.moveRepo(path: repo.path, inGroup: group, toGroupIndex: posInGroup + 1)
+                }
+            }
+            .disabled(posInGroup == groupCount - 1)
+            Divider()
+            Button(state.t(.finder)) { state.openFinder(repo.path) }
+        }
     }
 
     /// Manual reorder: track the vertical drag on the grip, then on release move
@@ -199,6 +225,7 @@ struct MenuContentView: View {
     }
 
     private func railButton(_ symbol: String, label: String, active: Bool = false,
+                            shortcut: KeyEquivalent? = nil,
                             action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
@@ -210,6 +237,7 @@ struct MenuContentView: View {
         .foregroundStyle(active ? Color.accentColor : Color.secondary)
         .help(label)
         .accessibilityLabel(label)
+        .modifier(OptionalShortcut(key: shortcut))
     }
 
     // MARK: Detail
@@ -244,10 +272,12 @@ struct MenuContentView: View {
                 }
                 .buttonStyle(.borderless).foregroundStyle(.secondary)
                 .help(state.t(.refresh)).accessibilityLabel(state.t(.refresh))
+                .keyboardShortcut("r")
                 Button { withAnimation(selectAnim) { pane = .newWorktree } } label: {
                     Label(state.t(.new), systemImage: "plus")
                 }
                 .buttonStyle(.borderedProminent).help(state.t(.newWorktreeHelp))
+                .keyboardShortcut("n")
             }
             .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
 
@@ -413,6 +443,15 @@ struct MenuContentView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// `.keyboardShortcut` kabul eden ama nil'de hiçbir şey eklemeyen sarmalayıcı —
+/// railButton'ın opsiyonel kısayol parametresi için.
+private struct OptionalShortcut: ViewModifier {
+    let key: KeyEquivalent?
+    func body(content: Content) -> some View {
+        if let key { content.keyboardShortcut(key) } else { content }
     }
 }
 

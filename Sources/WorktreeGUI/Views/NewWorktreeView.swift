@@ -103,10 +103,12 @@ struct NewWorktreeForm: View {
                     if submitted {
                         Button(state.t(.close)) { onClose() }
                             .buttonStyle(.borderedProminent)
+                            .keyboardShortcut(.cancelAction)
                         Spacer()
                     } else {
                         Button(state.t(.cancel)) { onClose() }
                             .buttonStyle(.bordered)
+                            .keyboardShortcut(.cancelAction)
                         Spacer()
                         Button {
                             let req = WorktreeRequest(
