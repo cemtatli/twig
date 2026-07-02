@@ -14,6 +14,7 @@ public enum L10nKey: String, CaseIterable {
     // Repo detail + worktree rows
     case noWorktreesYet, createFirstWorktree, deletePrompt, worktreeWord, branchPlus
     case cancel, finder, delete, noRepositories, loading, pickFolderHint
+    case statusClean, statusDirty, moveUp, moveDown
     // New worktree form
     case newWorktreeTitle, existingBranch, newBranchTab, branch, newBranchName
     case branchPlaceholder, baseBranch, taskNameFolder, taskPlaceholder, working, close, create
@@ -53,6 +54,9 @@ public enum L10n {
             .cancel: "Cancel", .finder: "Finder", .delete: "Delete",
             .noRepositories: "No repositories", .loading: "Loading\u{2026}",
             .pickFolderHint: "Pick a folder via \u{201C}Add repo\u{201D} on the left",
+            .statusClean: "No uncommitted changes",
+            .statusDirty: "Uncommitted changes",
+            .moveUp: "Move Up", .moveDown: "Move Down",
             .newWorktreeTitle: "New Worktree", .existingBranch: "Existing branch",
             .newBranchTab: "New branch", .branch: "Branch", .newBranchName: "New branch name",
             .branchPlaceholder: "e.g. feat/booking", .baseBranch: "Base branch (to copy)",
@@ -89,6 +93,9 @@ public enum L10n {
             .cancel: "Vazgeç", .finder: "Finder", .delete: "Sil",
             .noRepositories: "Repo yok", .loading: "Yükleniyor\u{2026}",
             .pickFolderHint: "Soldaki \u{201C}Repo ekle\u{201D} ile bir klasör seç",
+            .statusClean: "Kaydedilmemiş değişiklik yok",
+            .statusDirty: "Kaydedilmemiş değişiklik var",
+            .moveUp: "Yukarı Taşı", .moveDown: "Aşağı Taşı",
             .newWorktreeTitle: "Yeni Worktree", .existingBranch: "Var olan branch",
             .newBranchTab: "Yeni branch", .branch: "Branch", .newBranchName: "Yeni branch adı",
             .branchPlaceholder: "ör. feat/randevu", .baseBranch: "Base branch (kopyalanacak)",
