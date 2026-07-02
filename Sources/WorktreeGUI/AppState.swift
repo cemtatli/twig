@@ -50,12 +50,58 @@ final class AppState: ObservableObject {
                     return wt
                 }
             }
+            let ordered = AppState.applyOrder(scanned, order: config.repoOrder)
             await MainActor.run {
-                self?.repos = scanned
+                self?.repos = ordered
                 self?.worktreesByRepo = map
                 self?.isRefreshing = false
             }
         }
+    }
+
+    /// Order scanned repos by the saved `repoOrder`, then make the result
+    /// group-contiguous so the flat array matches the sectioned display order
+    /// (keeps the 1-9 shortcuts aligned with what's on screen). Repos missing
+    /// from `repoOrder` keep scan order, after the known ones.
+    nonisolated private static func applyOrder(_ scanned: [Repo], order: [String]) -> [Repo] {
+        func key(_ r: Repo) -> String { "\(r.group)/\(r.name)" }
+        let sorted = scanned.enumerated().sorted { a, b in
+            let ia = order.firstIndex(of: key(a.element)) ?? Int.max
+            let ib = order.firstIndex(of: key(b.element)) ?? Int.max
+            return ia != ib ? ia < ib : a.offset < b.offset
+        }.map(\.element)
+        var groupsSeen: [String] = []
+        var buckets: [String: [Repo]] = [:]
+        for r in sorted {
+            if buckets[r.group] == nil { groupsSeen.append(r.group) }
+            buckets[r.group, default: []].append(r)
+        }
+        return groupsSeen.flatMap { buckets[$0]! }
+    }
+
+    /// Drag-to-reorder: move `path` to `target` position within its group.
+    /// Persists the new order quietly (no re-scan/flicker) so it survives refresh
+    /// and relaunch; 1-9 follow it.
+    func moveRepo(path: String, inGroup group: String, toGroupIndex target: Int) {
+        var groupRepos = repos.filter { $0.group == group }
+        guard let from = groupRepos.firstIndex(where: { $0.path == path }) else { return }
+        let clamped = max(0, min(target, groupRepos.count - 1))
+        guard clamped != from else { return }
+        let moved = groupRepos.remove(at: from)
+        groupRepos.insert(moved, at: min(clamped, groupRepos.count))
+        // Rebuild group-contiguous so the flat array matches sectioned display
+        // order (keeps 1-9 aligned with what's on screen).
+        var groupsSeen: [String] = []
+        var buckets: [String: [Repo]] = [:]
+        for r in repos {
+            if buckets[r.group] == nil { groupsSeen.append(r.group) }
+            buckets[r.group, default: []].append(r)
+        }
+        buckets[group] = groupRepos
+        let reordered = groupsSeen.flatMap { buckets[$0]! }
+        repos = reordered
+        config.repoOrder = reordered.map { "\($0.group)/\($0.name)" }
+        try? store.save(config)
     }
 
     func branches(for repo: Repo) -> [String] {

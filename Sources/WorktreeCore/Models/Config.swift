@@ -61,22 +61,26 @@ public struct Config: Codable, Equatable {
     public var terminalStartupCommand: String
     public var language: String
     public var repos: [String: RepoSettings]
+    /// User's drag-to-reorder order for the sidebar repo list, as "{group}/{repo}"
+    /// keys. Repos not listed here fall back to scan order (appended after known
+    /// ones within their group). Empty = pure scan order.
+    public var repoOrder: [String]
     public var defaults: Defaults
 
     public init(scanRoots: [String], scanDepth: Int, manualRepos: [String],
                 terminalApp: String, editorApp: String,
                 terminalStartupCommand: String = "", language: String = "en",
-                repos: [String: RepoSettings], defaults: Defaults) {
+                repos: [String: RepoSettings], repoOrder: [String] = [], defaults: Defaults) {
         self.scanRoots = scanRoots; self.scanDepth = scanDepth; self.manualRepos = manualRepos
         self.terminalApp = terminalApp; self.editorApp = editorApp
         self.terminalStartupCommand = terminalStartupCommand
         self.language = language
-        self.repos = repos; self.defaults = defaults
+        self.repos = repos; self.repoOrder = repoOrder; self.defaults = defaults
     }
 
     private enum CodingKeys: String, CodingKey {
         case scanRoots, scanDepth, manualRepos, terminalApp, editorApp
-        case terminalStartupCommand, language, repos, defaults
+        case terminalStartupCommand, language, repos, repoOrder, defaults
     }
 
     // Resilient decoding: a hand-edited or older config.json missing keys
@@ -92,6 +96,7 @@ public struct Config: Codable, Equatable {
         terminalStartupCommand = try c.decodeIfPresent(String.self, forKey: .terminalStartupCommand) ?? ""
         language = try c.decodeIfPresent(String.self, forKey: .language) ?? "en"
         repos = try c.decodeIfPresent([String: RepoSettings].self, forKey: .repos) ?? [:]
+        repoOrder = try c.decodeIfPresent([String].self, forKey: .repoOrder) ?? []
         defaults = try c.decodeIfPresent(Defaults.self, forKey: .defaults) ?? d.defaults
     }
 
@@ -104,6 +109,7 @@ public struct Config: Codable, Equatable {
         terminalStartupCommand: "",
         language: "en",
         repos: [:],
+        repoOrder: [],
         defaults: Defaults(worktreePath: "{group}/task/{type}-{taskName}", defaultBase: "main")
     )
 
