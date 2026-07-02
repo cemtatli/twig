@@ -128,6 +128,7 @@ struct SettingsView: View {
                             Text(state.t(.editConfigHint))
                             Text(ConfigStore.defaultPath.abbreviatingHome)
                                 .font(Theme.mono(11))
+                                .foregroundStyle(.tertiary)
                                 .textSelection(.enabled)
                         }
                     }

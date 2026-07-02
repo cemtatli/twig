@@ -336,7 +336,6 @@ struct MenuContentView: View {
             Circle()
                 .fill(wt.isDirty ? Theme.dotDirty : Theme.dotClean)
                 .frame(width: 6, height: 6)
-                .help(state.t(wt.isDirty ? .statusDirty : .statusClean))
                 .accessibilityLabel(state.t(wt.isDirty ? .statusDirty : .statusClean))
             Image(systemName: "arrow.triangle.branch")
                 .font(.system(size: 12, weight: .medium))
@@ -378,6 +377,9 @@ struct MenuContentView: View {
                 .fill(hovered ? Color.primary.opacity(0.06) : .clear)
         )
         .contentShape(Rectangle())
+        // Satır düzeyinde tooltip — 6pt durum noktası tek başına hover hedefi
+        // olamayacak kadar küçük.
+        .help(state.t(wt.isDirty ? .statusDirty : .statusClean))
         .onHover { hovering in hoveredPath = hovering ? wt.path : (hovered ? nil : hoveredPath) }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: hovered)
         .contextMenu {

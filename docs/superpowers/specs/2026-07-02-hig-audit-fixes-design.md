@@ -25,8 +25,11 @@ dokunulmaz (repoOrder/moveRepo zaten uncommitted diff'te var ve kalır).
    görünüyor ve metin beyaz kalıyor (Light/Dark tutarsızlığı — en kritik bulgu).
    Düzeltme: detail tarafına opak semantik zemin
    `Color(nsColor: .windowBackgroundColor)`; sidebar'a source-list hissi için
-   `.background(.ultraThinMaterial)` (altında aynı semantik zemin, böylece
-   Light'ta açık/Dark'ta koyu garanti). Mevcut `Divider` ayrımı kalır.
+   tonal ayrım. Mevcut `Divider` ayrımı kalır.
+   *Uygulama sapması (doğrulamada):* `.ultraThinMaterial` denendi ama SwiftUI
+   materyalleri pencere ARKASINI örnekler (kardeş katmandaki opak zemini değil)
+   — masaüstü yine sızdı. Yerine deterministik `Color.primary.opacity(0.04)`
+   tint kullanıldı; ekran görüntüsüyle iki modda doğrulandı.
    Uygulamada Light+Dark ekran görüntüsüyle doğrulanacak; ölçüt: iki modda da
    arkadan içerik sızmaması ve metinlerin doğru semantik renkte olması.
 2. **Drag grip'leri sürekli görünür.** Native listelerde grip yok; görsel
