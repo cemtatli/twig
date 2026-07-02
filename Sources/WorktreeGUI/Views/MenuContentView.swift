@@ -43,6 +43,7 @@ struct MenuContentView: View {
             .clipped()
         }
         .frame(width: 540, height: 500)
+        .background(Color(nsColor: .windowBackgroundColor))
         .focusable()
         .focused($navFocused)
         .focusEffectDisabled()
@@ -114,9 +115,9 @@ struct MenuContentView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(groupedRepos, id: \.group) { section in
                         Text(section.group)
-                            .font(.caption).fontWeight(.medium)
+                            .font(.caption).fontWeight(.semibold)
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 10).padding(.top, 8).padding(.bottom, 2)
+                            .padding(.horizontal, 10).padding(.top, 10).padding(.bottom, 4)
                         ForEach(Array(section.repos.enumerated()), id: \.element.repo.id) { pos, entry in
                             repoRowView(repo: entry.repo, globalIndex: entry.index,
                                         group: section.group, posInGroup: pos,
@@ -138,6 +139,7 @@ struct MenuContentView: View {
             }
             .padding(.horizontal, 10).padding(.vertical, 8)
         }
+        .background(.ultraThinMaterial)
     }
 
     /// One repo row. A custom row (not a `List`) so drag-to-reorder can use a
@@ -150,6 +152,9 @@ struct MenuContentView: View {
         let isDragging = draggingPath == repo.path
         return HStack(spacing: 6) {
             RepoDragHandle()
+                .opacity(isHovered || isDragging ? 1 : 0)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.12),
+                           value: isHovered || isDragging)
                 .highPriorityGesture(reorderGesture(repo: repo, group: group,
                                                     posInGroup: posInGroup, groupCount: groupCount))
             Label(repo.name, systemImage: "shippingbox").font(.body)
@@ -161,7 +166,7 @@ struct MenuContentView: View {
         .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
         .background(
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(isSelected ? AnyShapeStyle(Color.accentColor)
+                .fill(isSelected ? AnyShapeStyle(Color(nsColor: .selectedContentBackgroundColor))
                       : isHovered ? AnyShapeStyle(Color.primary.opacity(0.08))
                       : AnyShapeStyle(Color.clear))
         )
