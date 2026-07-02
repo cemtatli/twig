@@ -122,12 +122,18 @@ struct SettingsView: View {
                         Text(state.t(.startupCommandTitle))
                     }
                 } footer: {
-                    Text(state.t(.startupCommandCaption))
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(state.t(.startupCommandCaption))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(state.t(.editConfigHint))
+                            Text(ConfigStore.defaultPath.abbreviatingHome)
+                                .font(Theme.mono(11))
+                                .textSelection(.enabled)
+                        }
+                    }
                 }
             }
             .formStyle(.grouped)
-
-            configHint
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -149,20 +155,6 @@ struct SettingsView: View {
         .padding(.horizontal, 20)
         .padding(.top, 20)
         .padding(.bottom, 12)
-    }
-
-    /// Where the JSON config lives, for hand-editing — a read-only mono path.
-    private var configHint: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(state.t(.editConfigHint))
-                .font(.caption).foregroundStyle(.secondary)
-            Text(ConfigStore.defaultPath.abbreviatingHome)
-                .font(Theme.mono(11)).foregroundStyle(.tertiary)
-                .textSelection(.enabled)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
     }
 
     // MARK: bindings (apply + persist immediately)

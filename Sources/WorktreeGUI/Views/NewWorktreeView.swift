@@ -121,7 +121,6 @@ struct NewWorktreeForm: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(effectiveBranch.isEmpty || taskName.isEmpty)
-                        .opacity(effectiveBranch.isEmpty || taskName.isEmpty ? 0.4 : 1)
                     }
                 }
                 .padding(.top, 4)
