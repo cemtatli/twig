@@ -55,7 +55,7 @@ Per-repo settings are keyed by `"{group}/{repo}"`. Resolution is always **repo-s
 
 ### GUI
 
-`WorktreeGUIApp` → `MenuBarExtra(... .window)` → `MenuContentView` (master-detail: repo list + New Worktree / Settings panes in `Views/`). `AppState` (`@MainActor ObservableObject`) is the single source of truth and the only bridge into Core. Scanning and per-repo `git worktree list` run on `Task.detached` off the main thread so the popover never freezes; results are published back via `MainActor.run`. `Theme.swift` holds styling — see the design-direction notes below before changing visuals.
+`WorktreeGUIApp` → `MenuBarExtra(... .window)` → `MenuContentView` (master-detail: repo list + New Worktree / Settings panes in `Views/`). `AppState` (`@MainActor ObservableObject`) is the single source of truth and the only bridge into Core. Scanning and per-repo `git worktree list` run on `Task.detached` off the main thread so the popover never freezes; results are published back via `MainActor.run`. `Theme.swift` holds the dark token set and `Controls.swift` the custom control family (FloatingPanel, IconTile, PillTabBar, TwigToggle, SettingsRow, …) — see the design-direction notes below before changing visuals.
 
 ## Conventions
 
@@ -66,4 +66,4 @@ Per-repo settings are keyed by `"{group}/{repo}"`. Resolution is always **repo-s
 
 ## Design skills
 
-`.agents/skills/` contains `macos-design-guidelines` and `swiftui-expert-skill` (SKILL.md each) — consult them when changing UI. The app's current visual direction is Apple-native (system accent + vibrancy + SF Pro source-list).
+`.agents/skills/` contains `macos-design-guidelines` and `swiftui-expert-skill` (SKILL.md each) — consult them when changing UI. The app is branded **Twig** and its current visual direction is a Keeby-style custom dark design system (dark-only, orange #FF6A1A accent, floating rounded panels on a near-black canvas, gray section labels outside cards, custom controls — no native segmented/bezeled chrome). Spec: `docs/superpowers/specs/2026-07-04-twig-rebrand-keeby-restyle-design.md`.
