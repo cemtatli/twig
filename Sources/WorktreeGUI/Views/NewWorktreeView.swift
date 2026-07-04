@@ -37,18 +37,12 @@ struct NewWorktreeForm: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 // MARK: — Mod seçici (kart içinde)
-                // Branch-mode: native segmented control. Native disabled state
-                // dims it during submit, so no manual opacity is needed.
-                card {
-                    Picker("", selection: $mode) {
-                        Text(state.t(.existingBranch)).tag(0)
-                        Text(state.t(.newBranchTab)).tag(1)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
+                // Branch-mode: Keeby pill sekmeleri (HIG tab-bar deseni).
+                PillTabBar(items: [state.t(.existingBranch), state.t(.newBranchTab)],
+                           selection: $mode,
+                           accessibilityTitle: state.t(.branch))
                     .disabled(submitted)
-                    .padding(12)
-                }
+                    .opacity(submitted ? 0.4 : 1)
 
                 // MARK: — Branch bölümü
                 if mode == 0 {

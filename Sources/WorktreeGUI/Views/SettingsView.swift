@@ -25,17 +25,9 @@ struct SettingsView: View {
                     card {
                         SettingsRow(title: state.t(.languageTitle),
                                     showsHairline: false) {
-                            Picker("", selection: Binding(
-                                get: { state.language },
-                                set: { state.setLanguage($0) }
-                            )) {
-                                ForEach(Language.allCases, id: \.self) { lang in
-                                    Text(lang.label).tag(lang)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .accessibilityLabel(state.t(.languageTitle))
+                            PillTabBar(items: Language.allCases.map(\.label),
+                                       selection: languageSelection,
+                                       accessibilityTitle: state.t(.languageTitle))
                         }
                     }
 
@@ -209,6 +201,12 @@ struct SettingsView: View {
     }
 
     // MARK: bindings (apply + persist immediately)
+
+    /// PillTabBar indeksle çalışır; Language enum'una çevir.
+    private var languageSelection: Binding<Int> {
+        Binding(get: { Language.allCases.firstIndex(of: state.language) ?? 0 },
+                set: { state.setLanguage(Language.allCases[$0]) })
+    }
 
     /// Slider Double ister; yalnız değer gerçekten değişince yaz (sürükleme
     /// boyunca her tick'te config dosyasına yazmamak için).

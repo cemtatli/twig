@@ -279,17 +279,26 @@ struct MenuContentView: View {
                 Text(repo.name)
                     .font(.system(size: 17, weight: .bold))
                     .lineLimit(1).truncationMode(.middle)
-                if state.isRefreshing { ProgressView().controlSize(.small).padding(.leading, 2) }
                 Spacer()
-                // Yenile — New kapsülüyle aynı boy/krom, nötr koyu dolgulu ikon buton.
+                // Yenile — New kapsülüyle aynı boy/krom. Yenileme sırasında ok
+                // yerine AYNI çerçevede spinner: başlık yanına ayrı spinner
+                // koymak header'ı sıkıştırıp taşırıyordu.
                 Button { state.refresh() } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .padding(.horizontal, 11).padding(.vertical, 7)
-                        .background(Color.white.opacity(0.08), in: Capsule())
+                    Group {
+                        if state.isRefreshing {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                    .frame(width: 16, height: 16)
+                    .padding(.horizontal, 11).padding(.vertical, 7)
+                    .background(Color.white.opacity(0.08), in: Capsule())
                 }
                 .buttonStyle(.plain)
+                .disabled(state.isRefreshing)
                 .help(state.t(.refresh)).accessibilityLabel(state.t(.refresh))
                 .keyboardShortcut("r")
                 Button { withAnimation(selectAnim) { pane = .newWorktree } } label: {

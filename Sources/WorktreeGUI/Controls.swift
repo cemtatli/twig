@@ -104,6 +104,55 @@ struct TwigToggle: View {
     }
 }
 
+// MARK: - PillTabBar
+
+/// Keeby pill sekme çubuğu — native segmented picker'ın özel karşılığı
+/// (HIG tab-bar deseninin koyu/kapsül yorumu). Seçili sekme turuncu kapsül
+/// olarak kayarak gelir; reduce-motion'da animasyonsuz. VoiceOver'a gerçek
+/// segmented picker olarak sunulur.
+struct PillTabBar: View {
+    let items: [String]
+    @Binding var selection: Int
+    var accessibilityTitle: String = ""
+    @Namespace private var ns
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(items.indices, id: \.self) { i in
+                Button {
+                    withAnimation(reduceMotion ? nil : .snappy(duration: 0.22)) {
+                        selection = i
+                    }
+                } label: {
+                    Text(items[i])
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(selection == i ? .white : .secondary)
+                        .padding(.horizontal, 14).padding(.vertical, 6)
+                        .background {
+                            if selection == i {
+                                Capsule().fill(Theme.accent)
+                                    .matchedGeometryEffect(id: "pill", in: ns)
+                            }
+                        }
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(Color.white.opacity(0.06), in: Capsule())
+        .accessibilityRepresentation {
+            Picker(accessibilityTitle, selection: $selection) {
+                ForEach(items.indices, id: \.self) { i in
+                    Text(items[i]).tag(i)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+}
+
 // MARK: - PillBadge
 
 /// Koyu kapsül değer rozeti (Keeby "100%" / "⌘K").
