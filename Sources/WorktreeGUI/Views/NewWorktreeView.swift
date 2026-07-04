@@ -20,12 +20,11 @@ struct NewWorktreeForm: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+
+                // MARK: — Başlık
                 HStack(spacing: 10) {
                     SidebarToggle()
-                    if state.sidebarCollapsed {
-                        TwigMark().frame(width: 18, height: 18)
-                            .foregroundStyle(Brand.signalOrange)
-                    }
+                    IconTile(systemName: "plus", color: Theme.accent, side: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(state.t(.newWorktreeTitle))
                             .font(.title3.weight(.semibold))
@@ -37,59 +36,86 @@ struct NewWorktreeForm: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+                // MARK: — Mod seçici (kart içinde)
                 // Branch-mode: native segmented control. Native disabled state
                 // dims it during submit, so no manual opacity is needed.
-                Picker("", selection: $mode) {
-                    Text(state.t(.existingBranch)).tag(0)
-                    Text(state.t(.newBranchTab)).tag(1)
+                card {
+                    Picker("", selection: $mode) {
+                        Text(state.t(.existingBranch)).tag(0)
+                        Text(state.t(.newBranchTab)).tag(1)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .disabled(submitted)
+                    .padding(12)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .disabled(submitted)
+
+                // MARK: — Branch bölümü
+                Theme.sectionLabel(mode == 0 ? state.t(.branch) : state.t(.newBranchTab))
 
                 if mode == 0 {
-                    labeled(state.t(.branch)) {
-                        Picker("", selection: $existingBranch) {
-                            ForEach(branches, id: \.self) { Text($0).tag($0) }
+                    card {
+                        SettingsRow(title: state.t(.branch), showsHairline: false) {
+                            Picker("", selection: $existingBranch) {
+                                ForEach(branches, id: \.self) { Text($0).tag($0) }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .onChange(of: existingBranch) { _, new in taskName = new }
                         }
-                        .labelsHidden()
-                        .onChange(of: existingBranch) { _, new in taskName = new }
                     }
                 } else {
-                    labeled(state.t(.newBranchName)) {
-                        TextField(state.t(.branchPlaceholder), text: $newBranch)
-                            .textFieldStyle(.roundedBorder)
-                            .onChange(of: newBranch) { _, new in taskName = new }
-                    }
-                    labeled(state.t(.baseBranch)) {
-                        Picker("", selection: $base) {
-                            ForEach(branches, id: \.self) { Text($0).tag($0) }
+                    card {
+                        DarkTextField(
+                            placeholder: state.t(.branchPlaceholder),
+                            text: $newBranch
+                        )
+                        .onChange(of: newBranch) { _, new in taskName = new }
+                        .padding(12)
+                        Rectangle()
+                            .fill(Theme.hairline)
+                            .frame(height: 1)
+                            .padding(.leading, 12)
+                        SettingsRow(title: state.t(.baseBranch), showsHairline: false) {
+                            Picker("", selection: $base) {
+                                ForEach(branches, id: \.self) { Text($0).tag($0) }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
                         }
-                        .labelsHidden()
                     }
                 }
 
-                labeled(state.t(.taskNameFolder)) {
-                    TextField(state.t(.taskPlaceholder), text: $taskName)
-                        .textFieldStyle(.roundedBorder)
+                // MARK: — Task adı bölümü
+                Theme.sectionLabel(state.t(.taskNameFolder))
+
+                card {
+                    DarkTextField(
+                        placeholder: state.t(.taskPlaceholder),
+                        text: $taskName
+                    )
+                    .padding(12)
                 }
 
+                // MARK: — Log alanı (oluşturma sonrası)
                 if submitted {
-                    // Terminal log output — mono stays (it is log text), but on a
-                    // semantic text-area surface instead of an owned fill color.
+                    // Terminal log çıktısı — mono kalır (log metni), ama native
+                    // textBackgroundColor yerine Keeby koyu dolgu + hairline kontur.
                     ScrollView {
-                        Text(state.log.isEmpty ? state.t(.working) : state.log.joined(separator: "\n"))
+                        Text(state.log.isEmpty
+                             ? state.t(.working)
+                             : state.log.joined(separator: "\n"))
                             .font(Theme.mono(10))
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(8)
                     }
                     .frame(height: 120)
-                    .background(Color(nsColor: .textBackgroundColor),
-                                in: RoundedRectangle(cornerRadius: 8))
+                    .background(Color.white.opacity(0.05),
+                                in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder(Theme.hairline, lineWidth: 1)
                     )
                     if let err = state.lastError {
                         Text(err)
@@ -99,17 +125,24 @@ struct NewWorktreeForm: View {
                     }
                 }
 
+                // MARK: — Eylem butonları
                 HStack(spacing: 8) {
                     if submitted {
-                        Button(state.t(.close)) { onClose() }
-                            .buttonStyle(.borderedProminent)
-                            .keyboardShortcut(.cancelAction)
+                        Button { onClose() } label: {
+                            Text(state.t(.close))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14).padding(.vertical, 7)
+                                .background(Theme.accent, in: Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.cancelAction)
                         Spacer()
                     } else {
-                        Button(state.t(.cancel)) { onClose() }
-                            .buttonStyle(.bordered)
+                        BorderedPillButton(title: state.t(.cancel)) { onClose() }
                             .keyboardShortcut(.cancelAction)
                         Spacer()
+                        let canCreate = !(effectiveBranch.isEmpty || taskName.isEmpty)
                         Button {
                             let req = WorktreeRequest(
                                 repo: repo, branch: effectiveBranch, taskName: taskName,
@@ -117,10 +150,15 @@ struct NewWorktreeForm: View {
                             state.createWorktree(req)
                             submitted = true
                         } label: {
-                            Label(state.t(.create), systemImage: "plus")
+                            Text(state.t(.create))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14).padding(.vertical, 7)
+                                .background(Theme.accent, in: Capsule())
                         }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(effectiveBranch.isEmpty || taskName.isEmpty)
+                        .buttonStyle(.plain)
+                        .disabled(!canCreate)
+                        .opacity(canCreate ? 1 : 0.4)
                     }
                 }
                 .padding(.top, 4)
@@ -146,13 +184,11 @@ struct NewWorktreeForm: View {
         return branches.first ?? configured
     }
 
+    /// İkinci seviye yüzey — panel içindeki Keeby form kartı.
     @ViewBuilder
-    private func labeled<C: View>(_ title: String, @ViewBuilder content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            content()
-        }
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) { content() }
+            .background(Color.white.opacity(0.04),
+                        in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }

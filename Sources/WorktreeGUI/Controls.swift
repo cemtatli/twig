@@ -144,6 +144,24 @@ struct BorderedPillButton: View {
     }
 }
 
+// MARK: - DarkTextField
+
+/// Koyu alan kroması — plain TextField üzerine Keeby dolgusu.
+struct DarkTextField: View {
+    let placeholder: String
+    @Binding var text: String
+    var onSubmit: () -> Void = {}
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .textFieldStyle(.plain)
+            .font(.system(size: 13))
+            .padding(.horizontal, 10).padding(.vertical, 7)
+            .background(Color.white.opacity(0.06),
+                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .onSubmit(onSubmit)
+    }
+}
+
 // MARK: - SettingsRow
 
 /// Kart içi ayar satırı: solda başlık (+ opsiyonel alt metin), sağda kontrol,
