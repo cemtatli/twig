@@ -7,3 +7,4 @@ DerivedData/
 
 # Built app bundle
 WorktreeGUI.app/
+.claude/
