@@ -8,7 +8,6 @@ struct WorktreeGUIApp: App {
     var body: some Scene {
         MenuBarExtra {
             MenuContentView().environmentObject(state)
-                .preferredColorScheme(.dark)
         } label: {
             Image(nsImage: TwigGlyph.menuBarImage())
                 .accessibilityLabel("Twig")

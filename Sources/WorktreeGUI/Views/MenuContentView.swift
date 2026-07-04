@@ -138,12 +138,12 @@ struct MenuContentView: View {
                 VStack(spacing: 0) {
                     utilityRow(symbol: "folder.badge.plus", tile: Color(red: 0.28, green: 0.64, blue: 0.97),
                                label: state.t(.addRepo)) { state.addReposViaPanel() }
-                    Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 48)
+                    Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 52)
                     utilityRow(symbol: "gearshape.fill", tile: Color(white: 0.45),
                                label: state.t(.settings), active: pane == .settings, shortcut: ",") {
                         withAnimation(selectAnim) { pane = .settings }
                     }
-                    Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 48)
+                    Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 52)
                     utilityRow(symbol: "power", tile: Color(red: 0.94, green: 0.31, blue: 0.36),
                                label: state.t(.quit), shortcut: "q") {
                         NSApplication.shared.terminate(nil)
@@ -239,7 +239,8 @@ struct MenuContentView: View {
                 dragTranslation = value.translation.height
             }
             .onEnded { value in
-                let slots = Int((value.translation.height / repoRowHeight).rounded())
+                // +2: VStack(spacing: 2) liste boşluğu gerçek adım yüksekliğine dahil
+                let slots = Int((value.translation.height / (repoRowHeight + 2)).rounded())
                 let target = posInGroup + slots
                 draggingPath = nil
                 dragTranslation = 0

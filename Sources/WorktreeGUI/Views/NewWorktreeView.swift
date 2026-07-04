@@ -51,8 +51,6 @@ struct NewWorktreeForm: View {
                 }
 
                 // MARK: — Branch bölümü
-                Theme.sectionLabel(mode == 0 ? state.t(.branch) : state.t(.newBranchTab))
-
                 if mode == 0 {
                     card {
                         SettingsRow(title: state.t(.branch), showsHairline: false) {
@@ -61,10 +59,13 @@ struct NewWorktreeForm: View {
                             }
                             .labelsHidden()
                             .pickerStyle(.menu)
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(state.t(.branch))
                             .onChange(of: existingBranch) { _, new in taskName = new }
                         }
                     }
                 } else {
+                    Theme.sectionLabel(state.t(.newBranchTab))
                     card {
                         DarkTextField(
                             placeholder: state.t(.branchPlaceholder),
@@ -82,6 +83,8 @@ struct NewWorktreeForm: View {
                             }
                             .labelsHidden()
                             .pickerStyle(.menu)
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(state.t(.baseBranch))
                         }
                     }
                 }

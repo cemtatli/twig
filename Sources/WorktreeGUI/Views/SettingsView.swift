@@ -35,6 +35,7 @@ struct SettingsView: View {
                             }
                             .pickerStyle(.segmented)
                             .labelsHidden()
+                            .accessibilityLabel(state.t(.languageTitle))
                         }
                     }
 
@@ -91,6 +92,7 @@ struct SettingsView: View {
                             Spacer(minLength: 12)
                             Slider(value: depthSlider, in: 1...5, step: 1)
                                 .frame(minWidth: 90, maxWidth: 190)
+                                .accessibilityLabel(state.t(.scanDepthTitle))
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
@@ -113,6 +115,7 @@ struct SettingsView: View {
                             .labelsHidden()
                             .pickerStyle(.menu)
                             .buttonStyle(.plain)
+                            .accessibilityLabel(state.t(.terminalTitle))
                         }
                         SettingsRow(title: state.t(.editorTitle),
                                     subtitle: state.t(.editorCaption),
@@ -125,6 +128,7 @@ struct SettingsView: View {
                             .labelsHidden()
                             .pickerStyle(.menu)
                             .buttonStyle(.plain)
+                            .accessibilityLabel(state.t(.editorTitle))
                         }
                     }
 
@@ -310,6 +314,7 @@ struct SettingsView: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .buttonStyle(.plain)
+                .accessibilityLabel(repo.name)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)

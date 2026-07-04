@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 // MARK: - FloatingPanel
 
@@ -56,8 +57,8 @@ extension Color {
 
 // MARK: - TilePalette
 
-/// Repo başına deterministik karo rengi — isim hash'i çalıştırmalar arası
-/// stabil olsun diye djb2 (Swift `hashValue` seed'li, kullanma).
+/// Repo sırasına göre karo rengi — `color(at:)` her indeksi palet boyutuna
+/// sararak döngüsel erişim sağlar; yan yana repolar her zaman farklı renk alır.
 enum TilePalette {
     static let colors: [Color] = [
         Color(red: 0.94, green: 0.31, blue: 0.36),   // kırmızı
@@ -68,14 +69,8 @@ enum TilePalette {
         Color(red: 0.91, green: 0.42, blue: 0.72),   // pembe
         Color(red: 0.35, green: 0.73, blue: 0.78),   // camgöbeği
     ]
-    static func color(for name: String) -> Color {
-        var h: UInt64 = 5381
-        for b in name.utf8 { h = (h &* 33) &+ UInt64(b) }
-        return colors[Int(h % UInt64(colors.count))]
-    }
 
-    /// Sidebar sırasına göre renk — komşu repolar hep farklı karo alır
-    /// (isim hash'i az repoda aynı renge yığılabiliyor).
+    /// Sidebar sırasına göre renk — komşu repolar hep farklı karo alır.
     static func color(at index: Int) -> Color {
         colors[((index % colors.count) + colors.count) % colors.count]
     }
