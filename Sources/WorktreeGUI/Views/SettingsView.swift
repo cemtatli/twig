@@ -288,7 +288,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 IconTile(systemName: "shippingbox.fill",
-                         color: TilePalette.color(for: repo.name),
+                         color: TilePalette.color(at: state.repos.firstIndex(of: repo) ?? 0),
                          side: 24)
                 Text(repo.name)
                     .font(.system(size: 14))

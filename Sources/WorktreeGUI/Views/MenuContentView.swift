@@ -40,6 +40,7 @@ struct MenuContentView: View {
         .frame(width: 560, height: 520)
         .background(Theme.canvas)
         .preferredColorScheme(.dark)
+        .tint(Theme.accent)
         .focusable()
         .focused($navFocused)
         .focusEffectDisabled()
@@ -190,7 +191,7 @@ struct MenuContentView: View {
                 .highPriorityGesture(reorderGesture(repo: repo, group: group,
                                                     posInGroup: posInGroup, groupCount: groupCount))
             IconTile(systemName: "shippingbox.fill",
-                     color: TilePalette.color(for: repo.name), side: 26)
+                     color: TilePalette.color(at: globalIndex), side: 26)
             Text(repo.name).font(.system(size: 13, weight: .medium))
             Spacer(minLength: 0)
         }
@@ -263,12 +264,17 @@ struct MenuContentView: View {
         }
     }
 
+    /// Reponun `state.repos` içindeki sırası — karo rengi sidebar'la aynı kalsın.
+    private func repoIndex(_ repo: Repo) -> Int {
+        state.repos.firstIndex { $0.path == repo.path } ?? 0
+    }
+
     private func repoDetail(_ repo: Repo) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 8) {
                 SidebarToggle()
                 IconTile(systemName: "shippingbox.fill",
-                         color: TilePalette.color(for: repo.name), side: 30)
+                         color: TilePalette.color(at: repoIndex(repo)), side: 30)
                 Text(repo.name)
                     .font(.system(size: 17, weight: .bold))
                 if state.isRefreshing { ProgressView().controlSize(.small).padding(.leading, 2) }

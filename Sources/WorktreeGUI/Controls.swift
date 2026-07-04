@@ -73,6 +73,12 @@ enum TilePalette {
         for b in name.utf8 { h = (h &* 33) &+ UInt64(b) }
         return colors[Int(h % UInt64(colors.count))]
     }
+
+    /// Sidebar sırasına göre renk — komşu repolar hep farklı karo alır
+    /// (isim hash'i az repoda aynı renge yığılabiliyor).
+    static func color(at index: Int) -> Color {
+        colors[((index % colors.count) + colors.count) % colors.count]
+    }
 }
 
 // MARK: - TwigToggle
