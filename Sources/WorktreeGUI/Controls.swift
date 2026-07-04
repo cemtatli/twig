@@ -126,7 +126,8 @@ struct PillBadge: View {
 
 // MARK: - BorderedPillButton
 
-/// Keeby "Preview" butonu: kapsül, 1px açık kontur, hover'da hafif dolgu.
+/// İkincil kapsül buton — Yenile/New ile aynı krom ailesi: nötr koyu dolgu,
+/// hover'da bir ton açılır (eski kontur-only hali buton sistemine uymuyordu).
 struct BorderedPillButton: View {
     let title: String
     var systemImage: String? = nil
@@ -137,12 +138,11 @@ struct BorderedPillButton: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 if let systemImage { Image(systemName: systemImage).font(.system(size: 11, weight: .semibold)) }
-                Text(title).font(.system(size: 13, weight: .medium))
+                Text(title).font(.system(size: 13, weight: .semibold))
             }
             .foregroundStyle(.primary)
-            .padding(.horizontal, 14).padding(.vertical, 6)
-            .background(hovered ? Color.white.opacity(0.08) : .clear, in: Capsule())
-            .overlay(Capsule().strokeBorder(Color.white.opacity(0.25), lineWidth: 1))
+            .padding(.horizontal, 14).padding(.vertical, 7)
+            .background(Color.white.opacity(hovered ? 0.12 : 0.08), in: Capsule())
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -183,6 +183,7 @@ struct SettingsRow<Trailing: View>: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title).font(.system(size: 14))
+                        .lineLimit(1)
                     if let subtitle {
                         Text(subtitle).font(.system(size: 12))
                             .foregroundStyle(.secondary)

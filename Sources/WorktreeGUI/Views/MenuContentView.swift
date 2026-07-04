@@ -277,6 +277,7 @@ struct MenuContentView: View {
                          color: TilePalette.color(at: repoIndex(repo)), side: 30)
                 Text(repo.name)
                     .font(.system(size: 17, weight: .bold))
+                    .lineLimit(1).truncationMode(.middle)
                 if state.isRefreshing { ProgressView().controlSize(.small).padding(.leading, 2) }
                 Spacer()
                 // Yenile — New kapsülüyle aynı boy/krom, nötr koyu dolgulu ikon buton.
@@ -382,7 +383,7 @@ struct MenuContentView: View {
                 }
                 rowAction("xmark", help: state.t(.cancel)) { confirmingRemovalPath = nil }
             } else {
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     rowAction("chevron.left.forwardslash.chevron.right",
                               help: state.config.editorApp) { state.openEditor(wt.path) }
                     rowAction("terminal",
@@ -390,8 +391,10 @@ struct MenuContentView: View {
                     rowAction("folder", help: state.t(.finder)) { state.openFinder(wt.path) }
                     rowAction("trash", help: state.t(.delete), danger: true) { confirmingRemovalPath = wt.path }
                 }
+                // Kayarak + solarak gelir; reduce-motion'da yalnız opaklık.
                 .opacity(hovered ? 1 : 0)
-                .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hovered)
+                .offset(x: hovered || reduceMotion ? 0 : 8)
+                .animation(reduceMotion ? nil : .snappy(duration: 0.2), value: hovered)
             }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -419,18 +422,22 @@ struct MenuContentView: View {
         }
     }
 
-    // MARK: Row controls — native borderless / bordered
+    // MARK: Row controls — Keeby krom ikon butonlar
 
     private func rowAction(_ symbol: String, help: String, danger: Bool = false,
                            action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 12.5, weight: .medium))
-                .frame(width: 24, height: 24)
-                .contentShape(Rectangle())
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundStyle(danger ? AnyShapeStyle(Theme.danger) : AnyShapeStyle(.primary))
+                .frame(width: 26, height: 26)
+                .background(
+                    Circle().fill(danger ? Theme.danger.opacity(0.16)
+                                         : Color.white.opacity(0.08))
+                )
+                .contentShape(Circle())
         }
-        .buttonStyle(.borderless)
-        .foregroundStyle(danger ? Theme.danger : Color.secondary)
+        .buttonStyle(.plain)
         .help(help).accessibilityLabel(help)
     }
 

@@ -20,11 +20,10 @@ struct SettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
 
-                    // MARK: — Dil
-                    Theme.sectionLabel(state.t(.languageTitle))
+                    // MARK: — Dil (tek satırlık kart: section başlığı tekrar
+                    // olurdu, satır başlığı yeter)
                     card {
                         SettingsRow(title: state.t(.languageTitle),
-                                    subtitle: state.t(.languageCaption),
                                     showsHairline: false) {
                             Picker("", selection: Binding(
                                 get: { state.language },
@@ -78,16 +77,20 @@ struct SettingsView: View {
 
                     Spacer().frame(height: 8)
 
-                    // MARK: — Tarama derinliği (Keeby "Volume" satırı: etiket + pill + slider)
-                    Theme.sectionLabel(state.t(.scanDepthTitle))
+                    // MARK: — Tarama derinliği (Keeby "Volume" satırı: etiket +
+                    // pill + slider; tek satırlık kart, section başlığı yok).
+                    // Etiket lineLimit+layoutPriority, slider esnek genişlik:
+                    // dar panelde (sidebar açık) metin harf harf kırılmasın.
                     card {
                         HStack(alignment: .center, spacing: 10) {
                             Text(state.t(.scanDepthTitle))
                                 .font(.system(size: 14))
+                                .lineLimit(1)
+                                .layoutPriority(1)
                             PillBadge("\(state.config.scanDepth)")
                             Spacer(minLength: 12)
                             Slider(value: depthSlider, in: 1...5, step: 1)
-                                .frame(width: 190)
+                                .frame(minWidth: 90, maxWidth: 190)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
