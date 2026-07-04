@@ -126,6 +126,20 @@ struct SettingsView: View {
 
                     Spacer().frame(height: 8)
 
+                    // MARK: — Kısayollar (salt bilgi: uygulamadaki sistem kısayolları)
+                    Theme.sectionLabel(state.t(.shortcutsTitle))
+                    card {
+                        shortcutRow(state.t(.newWorktreeTitle), "⌘N")
+                        shortcutRow(state.t(.refresh), "⌘R")
+                        shortcutRow(state.t(.settingsTitle), "⌘,")
+                        shortcutRow(state.t(.quit), "⌘Q")
+                        shortcutRow(state.t(.shortcutSelectRepo), "1–9")
+                        shortcutRow(state.t(.shortcutCycleRepos), "⇥ ↑ ↓")
+                        shortcutRow(state.t(.shortcutCloseEsc), "esc", isLast: true)
+                    }
+
+                    Spacer().frame(height: 8)
+
                     // MARK: — Paket yöneticisi
                     Theme.sectionLabel(state.t(.packageManagerTitle))
                     card {
@@ -232,6 +246,28 @@ struct SettingsView: View {
 
     private func options(_ current: String, _ presets: [String]) -> [String] {
         presets.contains(current) ? presets : [current] + presets
+    }
+
+    // MARK: shortcut row
+
+    /// Kısayol satırı: solda eylem adı, sağda tuş pill'i (Keeby "⌘K" deseni).
+    @ViewBuilder
+    private func shortcutRow(_ title: String, _ keys: String, isLast: Bool = false) -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 14))
+                    .lineLimit(1)
+                Spacer(minLength: 12)
+                PillBadge(keys)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(minHeight: 44)
+            if !isLast {
+                Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 16)
+            }
+        }
     }
 
     // MARK: info row

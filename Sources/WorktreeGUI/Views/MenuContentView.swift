@@ -12,8 +12,6 @@ struct MenuContentView: View {
     @State private var confirmingRemovalPath: String?
     @State private var hoveredPath: String?
     @State private var hoveredRepoPath: String?
-    @State private var draggingPath: String?
-    @State private var dragTranslation: CGFloat = 0
     @FocusState private var navFocused: Bool
 
     private let repoRowHeight: CGFloat = 38
@@ -175,28 +173,21 @@ struct MenuContentView: View {
         .modifier(OptionalShortcut(key: shortcut))
     }
 
-    /// One repo row. A custom row (not a `List`) so drag-to-reorder can use a
-    /// plain `DragGesture` — the system drag/`onMove` machinery gets cancelled by
-    /// the transient popover dismissing, but a gesture stays inside the window.
+    /// One repo row. Sıralama yalnız context menüden (Yukarı/Aşağı Taşı) —
+    /// grip'li drag-to-reorder popover içinde güvenilir çalışmadığı için
+    /// kaldırıldı.
     private func repoRowView(repo: Repo, globalIndex: Int, group: String,
                              posInGroup: Int, groupCount: Int) -> some View {
         let isSelected = pane == .repo && selectedRepo?.path == repo.path
         let isHovered = hoveredRepoPath == repo.path
-        let isDragging = draggingPath == repo.path
-        return HStack(spacing: 6) {
-            RepoDragHandle()
-                .opacity(isHovered || isDragging ? 1 : 0)
-                .animation(reduceMotion ? nil : .easeOut(duration: 0.12),
-                           value: isHovered || isDragging)
-                .highPriorityGesture(reorderGesture(repo: repo, group: group,
-                                                    posInGroup: posInGroup, groupCount: groupCount))
+        return HStack(spacing: 8) {
             IconTile(systemName: "shippingbox.fill",
                      color: TilePalette.color(at: globalIndex), side: 26)
             Text(repo.name).font(.system(size: 13, weight: .medium))
             Spacer(minLength: 0)
         }
         .lineLimit(1)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 10)
         .frame(height: repoRowHeight)
         .foregroundStyle(.primary)
         .background(
@@ -208,8 +199,6 @@ struct MenuContentView: View {
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(selectAnim) { selectedRepoPath = repo.path; pane = .repo } }
         .onHover { hovering in hoveredRepoPath = hovering ? repo.path : (isHovered ? nil : hoveredRepoPath) }
-        .offset(y: isDragging ? dragTranslation : 0)
-        .zIndex(isDragging ? 1 : 0)
         .help("\(group)/\(repo.name)  ·  \(globalIndex + 1)")
         .contextMenu {
             Button(state.t(.moveUp)) {
@@ -227,27 +216,6 @@ struct MenuContentView: View {
             Divider()
             Button(state.t(.finder)) { state.openFinder(repo.path) }
         }
-    }
-
-    /// Manual reorder: track the vertical drag on the grip, then on release move
-    /// the repo by `round(offset / rowHeight)` slots within its group.
-    private func reorderGesture(repo: Repo, group: String,
-                                posInGroup: Int, groupCount: Int) -> some Gesture {
-        DragGesture(minimumDistance: 4)
-            .onChanged { value in
-                draggingPath = repo.path
-                dragTranslation = value.translation.height
-            }
-            .onEnded { value in
-                // +2: VStack(spacing: 2) liste boşluğu gerçek adım yüksekliğine dahil
-                let slots = Int((value.translation.height / (repoRowHeight + 2)).rounded())
-                let target = posInGroup + slots
-                draggingPath = nil
-                dragTranslation = 0
-                withAnimation(selectAnim) {
-                    state.moveRepo(path: repo.path, inGroup: group, toGroupIndex: target)
-                }
-            }
     }
 
     // MARK: Detail
@@ -494,24 +462,6 @@ private struct OptionalShortcut: ViewModifier {
     func body(content: Content) -> some View {
         if let key { content.keyboardShortcut(key) } else { content }
     }
-}
-
-/// The 2×3 grip shown at a repo row's leading edge — the visible drag affordance
-/// for reordering (mirrors the OpenUsage plugin-list handle the user referenced).
-/// It is the drag source; the row is the drop target.
-private struct RepoDragHandle: View {
-    var body: some View {
-        HStack(spacing: 2.5) {
-            column
-            column
-        }
-        .opacity(0.4)   // inherits the row's foreground (white when selected)
-        .frame(width: 16, height: 22)
-        .contentShape(Rectangle())
-        .accessibilityHidden(true)
-    }
-    private var column: some View { VStack(spacing: 2.5) { dot; dot; dot } }
-    private var dot: some View { Circle().frame(width: 2.5, height: 2.5) }
 }
 
 extension String {

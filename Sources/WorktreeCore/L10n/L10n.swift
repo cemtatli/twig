@@ -27,6 +27,8 @@ public enum L10nKey: String, CaseIterable {
     case editConfigHint, pmNone, remove, languageTitle, languageCaption
     // Add-source panel
     case addPanelPrompt, addPanelMessage
+    // Shortcuts (Settings bölümü)
+    case shortcutsTitle, shortcutSelectRepo, shortcutCycleRepos, shortcutCloseEsc
     // Brand
     case tagline
 }
@@ -80,6 +82,10 @@ public enum L10n {
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
             .addPanelMessage: "Pick a repo folder or a root folder containing repos",
+            .shortcutsTitle: "Shortcuts",
+            .shortcutSelectRepo: "Select repo",
+            .shortcutCycleRepos: "Cycle repos",
+            .shortcutCloseEsc: "Cancel / close pane",
             .tagline: "Spin up a worktree.",
         ],
         .tr: [
@@ -119,6 +125,10 @@ public enum L10n {
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",
             .addPanelMessage: "Bir repo klasörü ya da repoları içeren bir kök klasör seç",
+            .shortcutsTitle: "Kısayollar",
+            .shortcutSelectRepo: "Repo seç",
+            .shortcutCycleRepos: "Repolar arasında gez",
+            .shortcutCloseEsc: "Vazgeç / paneli kapat",
             .tagline: "Bir worktree başlat.",
         ],
     ]
