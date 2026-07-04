@@ -55,6 +55,27 @@ extension Color {
     }
 }
 
+// MARK: - TilePalette
+
+/// Repo sırasına göre karo rengi — `color(at:)` her indeksi palet boyutuna
+/// sararak döngüsel erişim sağlar; yan yana repolar her zaman farklı renk alır.
+enum TilePalette {
+    static let colors: [Color] = [
+        Color(red: 0.94, green: 0.31, blue: 0.36),   // kırmızı
+        Color(red: 0.96, green: 0.53, blue: 0.19),   // turuncu
+        Color(red: 0.28, green: 0.64, blue: 0.97),   // mavi
+        Color(red: 0.62, green: 0.42, blue: 0.95),   // mor
+        Color(red: 0.22, green: 0.72, blue: 0.51),   // yeşil
+        Color(red: 0.91, green: 0.42, blue: 0.72),   // pembe
+        Color(red: 0.35, green: 0.73, blue: 0.78),   // camgöbeği
+    ]
+
+    /// Sidebar sırasına göre renk — komşu repolar hep farklı karo alır.
+    static func color(at index: Int) -> Color {
+        colors[((index % colors.count) + colors.count) % colors.count]
+    }
+}
+
 // MARK: - TwigToggle
 
 /// Keeby kapsül toggle: 44×26, beyaz topuz, açıkken turuncu dolgu.
