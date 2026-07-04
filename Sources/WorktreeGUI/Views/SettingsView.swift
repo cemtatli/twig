@@ -145,7 +145,7 @@ struct SettingsView: View {
         HStack(spacing: 8) {
             SidebarToggle()
             if state.sidebarCollapsed {
-                JigMark().frame(width: 18, height: 18)
+                TwigMark().frame(width: 18, height: 18)
                     .foregroundStyle(Brand.signalOrange)
             }
             Text(state.t(.settingsTitle))

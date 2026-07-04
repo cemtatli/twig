@@ -1,15 +1,15 @@
 import SwiftUI
 import AppKit
 
-/// Thin semantic-token + shared-helper layer for Jig.
+/// Thin semantic-token + shared-helper layer for Twig.
 ///
-/// Jig is an Apple-native menubar utility: it sits on the platform's own design
+/// Twig is an Apple-native menubar utility: it sits on the platform's own design
 /// system — semantic fonts (`.title3` / `.body` / `.caption`), semantic colors
 /// (`Color.primary` / `.secondary` / `.tertiary`), the **system accent** for all
 /// selection and emphasis, and system materials (`.listStyle(.sidebar)`
 /// vibrancy, grouped `Form`). There is intentionally no owned color/control
 /// design system here — that was the old "OpenUsage" direction and it read as
-/// generic. The brand survives only as the `JigMark` logo and the menubar icon
+/// generic. The brand survives only as the `TwigMark` logo and the menubar icon
 /// (the one allowed brand-orange use, in `Brand.signalOrange`).
 ///
 /// This file holds just the few things the platform does not give for free: the
@@ -34,11 +34,11 @@ enum Theme {
 
 // MARK: - Brand
 
-/// The Jig brand. Reduced to the single logo color — Jig uses the system accent
-/// for every control, so the brand orange appears ONLY on the `JigMark` glyph
+/// The Twig brand. Reduced to the single logo color — Twig uses the system accent
+/// for every control, so the brand orange appears ONLY on the `TwigMark` glyph
 /// and the menubar icon.
 enum Brand {
-    /// #FF6A1A — the Jig logo orange. Logo/menubar-icon use only.
+    /// #FF6A1A — the Twig logo orange. Logo/menubar-icon use only.
     static let signalOrange = Color(red: 1.0, green: 0.416, blue: 0.102)
 }
 

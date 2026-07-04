@@ -13,18 +13,27 @@ let grad = NSGradient(starting: NSColor(red: 1.0, green: 0.416, blue: 0.102, alp
                       ending:   NSColor(red: 0.859, green: 0.302, blue: 0.051, alpha: 1))!
 grad.draw(in: tile, angle: -90)
 
-// White clamp-J: a heavy "J" + a clamped bar (mirrors JigMark).
+// White twig: diagonal stem + two round-tipped offshoots (mirrors TwigMark).
+NSColor.white.setStroke()
 NSColor.white.setFill()
-let jFont = NSFont.systemFont(ofSize: side*0.5, weight: .black)
-let jAttrs: [NSAttributedString.Key: Any] = [.font: jFont, .foregroundColor: NSColor.white]
-let j = NSAttributedString(string: "J", attributes: jAttrs)
-let jSize = j.size()
-j.draw(at: NSPoint(x: (side - jSize.width)/2 + side*0.02, y: (side - jSize.height)/2 - side*0.02))
-// Clamp bar across the J hook (lower-left).
-let bar = NSBezierPath(roundedRect:
-    NSRect(x: side*0.30, y: side*0.40, width: side*0.16, height: side*0.07),
-    xRadius: side*0.02, yRadius: side*0.02)
-bar.fill()
+let w = side * 0.13 * 0.86            // stroke weight, scaled to tile
+func pt(_ x: CGFloat, _ y: CGFloat) -> NSPoint {
+    // TwigMark unit coords (y-down) -> icon coords (y-up), inset to the tile.
+    NSPoint(x: side * (0.07 + 0.86 * x), y: side * (0.07 + 0.86 * (1 - y)))
+}
+func stem(_ t: CGFloat) -> NSPoint { pt(0.28 + 0.44 * t, 0.90 - 0.80 * t) }
+let path = NSBezierPath()
+path.lineWidth = w
+path.lineCapStyle = .round
+path.move(to: pt(0.28, 0.90)); path.line(to: pt(0.72, 0.10))
+path.move(to: stem(0.42));     path.line(to: pt(0.88, 0.48))
+path.move(to: stem(0.68));     path.line(to: pt(0.18, 0.20))
+path.stroke()
+for budAt in [pt(0.88, 0.48), pt(0.18, 0.20)] {
+    let r = w * 0.8
+    NSBezierPath(ovalIn: NSRect(x: budAt.x - r, y: budAt.y - r,
+                                width: r * 2, height: r * 2)).fill()
+}
 
 image.unlockFocus()
 guard let tiff = image.tiffRepresentation,

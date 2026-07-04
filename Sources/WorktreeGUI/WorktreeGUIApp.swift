@@ -10,8 +10,8 @@ struct WorktreeGUIApp: App {
             MenuContentView().environmentObject(state)
                 .preferredColorScheme(.dark)
         } label: {
-            Image(nsImage: JigGlyph.menuBarImage())
-                .accessibilityLabel("Jig")
+            Image(nsImage: TwigGlyph.menuBarImage())
+                .accessibilityLabel("Twig")
         }
         .menuBarExtraStyle(.window)
     }

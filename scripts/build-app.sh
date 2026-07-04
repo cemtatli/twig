@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 BIN_NAME="WorktreeGUI"
-APP_DISPLAY="Jig"
+APP_DISPLAY="Twig"
 BUNDLE_ID="com.cem.worktreegui"
 APP="${BIN_NAME}.app"
 

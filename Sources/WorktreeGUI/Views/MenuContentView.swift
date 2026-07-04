@@ -112,7 +112,7 @@ struct MenuContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            JigMark()
+            TwigMark()
                 .frame(width: 22, height: 22)
                 .foregroundStyle(Brand.signalOrange)
                 .frame(maxWidth: .infinity)
@@ -262,7 +262,7 @@ struct MenuContentView: View {
             HStack(alignment: .center, spacing: 8) {
                 SidebarToggle()
                 if state.sidebarCollapsed {
-                    JigMark().frame(width: 18, height: 18)
+                    TwigMark().frame(width: 18, height: 18)
                         .foregroundStyle(Brand.signalOrange)
                 }
                 Text(repo.name)
@@ -319,7 +319,7 @@ struct MenuContentView: View {
 
     private var emptyWorktrees: some View {
         VStack(spacing: 8) {
-            JigMark()
+            TwigMark()
                 .frame(width: 26, height: 26)
                 .foregroundStyle(Brand.signalOrange)
             Text(state.t(.noWorktreesYet)).font(.headline)
@@ -429,7 +429,7 @@ struct MenuContentView: View {
 
     private var emptyState: some View {
         VStack(spacing: 10) {
-            JigWordmark(size: 22)
+            TwigWordmark(size: 22)
             Text(state.t(.tagline))
                 .font(.subheadline)
                 .foregroundStyle(.tertiary)
