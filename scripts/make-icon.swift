@@ -21,15 +21,15 @@ func pt(_ x: CGFloat, _ y: CGFloat) -> NSPoint {
     // TwigMark unit coords (y-down) -> icon coords (y-up), inset to the tile.
     NSPoint(x: side * (0.07 + 0.86 * x), y: side * (0.07 + 0.86 * (1 - y)))
 }
-func stem(_ t: CGFloat) -> NSPoint { pt(0.28 + 0.44 * t, 0.90 - 0.80 * t) }
+func stem(_ t: CGFloat) -> NSPoint { pt(0.30 + 0.36 * t, 0.90 - 0.80 * t) }
 let path = NSBezierPath()
 path.lineWidth = w
 path.lineCapStyle = .round
-path.move(to: pt(0.28, 0.90)); path.line(to: pt(0.72, 0.10))
-path.move(to: stem(0.42));     path.line(to: pt(0.88, 0.48))
-path.move(to: stem(0.68));     path.line(to: pt(0.18, 0.20))
+path.move(to: pt(0.30, 0.90)); path.line(to: pt(0.66, 0.10))
+path.move(to: stem(0.40));     path.line(to: pt(0.88, 0.36))
+path.move(to: stem(0.66));     path.line(to: pt(0.28, 0.18))
 path.stroke()
-for budAt in [pt(0.88, 0.48), pt(0.18, 0.20)] {
+for budAt in [pt(0.88, 0.36), pt(0.28, 0.18)] {
     let r = w * 0.8
     NSBezierPath(ovalIn: NSRect(x: budAt.x - r, y: budAt.y - r,
                                 width: r * 2, height: r * 2)).fill()

@@ -12,19 +12,19 @@ struct TwigMark: View {
             ZStack(alignment: .topLeading) {
                 Path { p in
                     // Gövde — sol-alt'tan sağ-üst'e.
-                    p.move(to: CGPoint(x: 0.28 * s, y: 0.90 * s))
-                    p.addLine(to: CGPoint(x: 0.72 * s, y: 0.10 * s))
+                    p.move(to: CGPoint(x: 0.30 * s, y: 0.90 * s))
+                    p.addLine(to: CGPoint(x: 0.66 * s, y: 0.10 * s))
                     // Sağ filiz.
-                    p.move(to: stemPoint(0.42, s))
-                    p.addLine(to: CGPoint(x: 0.88 * s, y: 0.48 * s))
+                    p.move(to: stemPoint(0.40, s))
+                    p.addLine(to: CGPoint(x: 0.88 * s, y: 0.36 * s))
                     // Sol filiz.
-                    p.move(to: stemPoint(0.68, s))
-                    p.addLine(to: CGPoint(x: 0.18 * s, y: 0.20 * s))
+                    p.move(to: stemPoint(0.66, s))
+                    p.addLine(to: CGPoint(x: 0.28 * s, y: 0.18 * s))
                 }
                 .stroke(style: StrokeStyle(lineWidth: w, lineCap: .round))
                 // Tomurcuklar — filiz uçlarında hafif büyük noktalar.
-                bud(at: CGPoint(x: 0.88 * s, y: 0.48 * s), w: w)
-                bud(at: CGPoint(x: 0.18 * s, y: 0.20 * s), w: w)
+                bud(at: CGPoint(x: 0.88 * s, y: 0.36 * s), w: w)
+                bud(at: CGPoint(x: 0.28 * s, y: 0.18 * s), w: w)
             }
             .frame(width: s, height: s)
         }
@@ -39,7 +39,7 @@ struct TwigMark: View {
 
     /// Gövde üzerinde t (0=alt, 1=üst) noktası.
     private func stemPoint(_ t: CGFloat, _ s: CGFloat) -> CGPoint {
-        CGPoint(x: (0.28 + 0.44 * t) * s, y: (0.90 - 0.80 * t) * s)
+        CGPoint(x: (0.30 + 0.36 * t) * s, y: (0.90 - 0.80 * t) * s)
     }
 }
 
