@@ -333,9 +333,10 @@ struct SettingsView: View {
     private func packageManagerRow(_ repo: Repo, isLast: Bool) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                IconTile(systemName: "shippingbox.fill",
-                         color: TilePalette.color(at: state.repos.firstIndex(of: repo) ?? 0),
-                         side: 24)
+                Image(systemName: "shippingbox")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
                 Text(repo.name)
                     .font(.system(size: 14))
                 Spacer(minLength: 12)

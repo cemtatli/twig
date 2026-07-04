@@ -180,9 +180,11 @@ struct MenuContentView: View {
                              posInGroup: Int, groupCount: Int) -> some View {
         let isSelected = pane == .repo && selectedRepo?.path == repo.path
         let isHovered = hoveredRepoPath == repo.path
-        return HStack(spacing: 8) {
-            IconTile(systemName: "shippingbox.fill",
-                     color: TilePalette.color(at: globalIndex), side: 26)
+        return HStack(spacing: 9) {
+            Image(systemName: "shippingbox")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isSelected ? .primary : .secondary)
+                .frame(width: 18)
             Text(repo.name).font(.system(size: 13, weight: .medium))
             Spacer(minLength: 0)
         }
@@ -233,17 +235,13 @@ struct MenuContentView: View {
         }
     }
 
-    /// Reponun `state.repos` içindeki sırası — karo rengi sidebar'la aynı kalsın.
-    private func repoIndex(_ repo: Repo) -> Int {
-        state.repos.firstIndex { $0.path == repo.path } ?? 0
-    }
-
     private func repoDetail(_ repo: Repo) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .center, spacing: 8) {
+            HStack(alignment: .center, spacing: 10) {
                 SidebarToggle()
-                IconTile(systemName: "shippingbox.fill",
-                         color: TilePalette.color(at: repoIndex(repo)), side: 30)
+                Image(systemName: "shippingbox")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.secondary)
                 Text(repo.name)
                     .font(.system(size: 17, weight: .bold))
                     .lineLimit(1).truncationMode(.middle)
