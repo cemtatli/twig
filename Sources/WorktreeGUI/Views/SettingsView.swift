@@ -4,10 +4,9 @@ import WorktreeCore
 
 /// Settings pane shown inside the popover's detail area (not a separate window).
 ///
-/// Built as a native grouped `Form`: every setting is a `Section`, so the
-/// platform supplies the card surfaces, insets, headers/footers, and Light/Dark
-/// treatment for free — the single "section" pattern, the System-Settings look.
-/// App lists are discovered from what's installed, not hardcoded.
+/// Keeby dili: `ScrollView` + `VStack` içinde kart dışı gri section başlıkları,
+/// `RoundedRectangle(cornerRadius: 12)` kartlar, kart içi `SettingsRow` satırlar,
+/// caption'lar kart altında `.tertiary` rengiyle. Her zaman koyu.
 struct SettingsView: View {
     @EnvironmentObject var state: AppState
 
@@ -18,123 +17,187 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             header
 
-            Form {
-                // Language — segmented switch under a titled header.
-                Section {
-                    Picker(state.t(.languageTitle),
-                           selection: Binding(get: { state.language },
-                                              set: { state.setLanguage($0) })) {
-                        ForEach(Language.allCases, id: \.self) { lang in
-                            Text(lang.label).tag(lang)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+
+                    // MARK: — Dil
+                    Theme.sectionLabel(state.t(.languageTitle))
+                    card {
+                        SettingsRow(title: state.t(.languageTitle), showsHairline: false) {
+                            Picker("", selection: Binding(
+                                get: { state.language },
+                                set: { state.setLanguage($0) }
+                            )) {
+                                ForEach(Language.allCases, id: \.self) { lang in
+                                    Text(lang.label).tag(lang)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
                         }
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                } header: {
-                    Text(state.t(.languageTitle))
-                } footer: {
                     Text(state.t(.languageCaption))
-                }
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 6)
 
-                // Repo sources — scan roots + manual repos, plus the add button.
-                Section {
-                    if state.config.scanRoots.isEmpty && state.config.manualRepos.isEmpty {
-                        Text(state.t(.noSourcesYet)).foregroundStyle(.secondary)
+                    Spacer().frame(height: 8)
+
+                    // MARK: — Repo kaynakları
+                    Theme.sectionLabel(state.t(.repoSourcesTitle))
+                    card {
+                        let scanRoots = state.config.scanRoots
+                        let manualRepos = state.config.manualRepos
+                        if scanRoots.isEmpty && manualRepos.isEmpty {
+                            HStack {
+                                Text(state.t(.noSourcesYet))
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 15)
+                            .frame(minHeight: 52)
+                        } else {
+                            ForEach(Array(scanRoots.enumerated()), id: \.element) { idx, path in
+                                sourceRow(path,
+                                          kind: state.t(.kindRoot),
+                                          isLast: idx == scanRoots.count - 1 && manualRepos.isEmpty)
+                            }
+                            ForEach(Array(manualRepos.enumerated()), id: \.element) { idx, path in
+                                sourceRow(path,
+                                          kind: state.t(.kindRepo),
+                                          isLast: idx == manualRepos.count - 1)
+                            }
+                        }
                     }
-                    ForEach(state.config.scanRoots, id: \.self) {
-                        sourceRow($0, kind: state.t(.kindRoot), isRepo: false)
-                    }
-                    ForEach(state.config.manualRepos, id: \.self) {
-                        sourceRow($0, kind: state.t(.kindRepo), isRepo: true)
-                    }
-                    Button {
+                    BorderedPillButton(title: state.t(.addFromFinder),
+                                       systemImage: "folder.badge.plus") {
                         state.addReposViaPanel()
-                    } label: {
-                        Label(state.t(.addFromFinder), systemImage: "folder.badge.plus")
                     }
-                    .buttonStyle(.bordered)
-                } header: {
-                    Text(state.t(.repoSourcesTitle))
-                } footer: {
+                    .padding(.horizontal, 6)
                     Text(state.t(.repoSourcesCaption))
-                }
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 6)
 
-                // Scan depth — segmented 1...5 under a titled header.
-                Section {
-                    Picker(state.t(.scanDepthTitle), selection: depthBinding) {
-                        ForEach(1...5, id: \.self) { Text("\($0)").tag($0) }
+                    Spacer().frame(height: 8)
+
+                    // MARK: — Tarama derinliği
+                    Theme.sectionLabel(state.t(.scanDepthTitle))
+                    card {
+                        SettingsRow(title: state.t(.scanDepthTitle), showsHairline: false) {
+                            Picker("", selection: depthBinding) {
+                                ForEach(1...5, id: \.self) { Text("\($0)").tag($0) }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                        }
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                } header: {
-                    Text(state.t(.scanDepthTitle))
-                } footer: {
                     Text(state.t(.scanDepthCaption))
-                }
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 6)
 
-                // Terminal — labeled menu row (the title is the row's own label,
-                // so no duplicate section header).
-                Section {
-                    Picker(state.t(.terminalTitle), selection: appBinding(\.terminalApp)) {
-                        ForEach(options(state.config.terminalApp, terminals), id: \.self) {
-                            Text($0).tag($0)
+                    Spacer().frame(height: 8)
+
+                    // MARK: — Terminal + Editör (tek kart)
+                    Theme.sectionLabel("\(state.t(.terminalTitle)) & \(state.t(.editorTitle))")
+                    card {
+                        SettingsRow(title: state.t(.terminalTitle)) {
+                            Picker("", selection: appBinding(\.terminalApp)) {
+                                ForEach(options(state.config.terminalApp, terminals), id: \.self) {
+                                    Text($0).tag($0)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .buttonStyle(.plain)
+                        }
+                        SettingsRow(title: state.t(.editorTitle), showsHairline: false) {
+                            Picker("", selection: appBinding(\.editorApp)) {
+                                ForEach(options(state.config.editorApp, editors), id: \.self) {
+                                    Text($0).tag($0)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .buttonStyle(.plain)
                         }
                     }
-                    .pickerStyle(.menu)
-                } footer: {
-                    Text(state.t(.terminalCaption))
-                }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(state.t(.terminalCaption))
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.tertiary)
+                        Text(state.t(.editorCaption))
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 6)
 
-                // Editor — labeled menu row.
-                Section {
-                    Picker(state.t(.editorTitle), selection: appBinding(\.editorApp)) {
-                        ForEach(options(state.config.editorApp, editors), id: \.self) {
-                            Text($0).tag($0)
+                    Spacer().frame(height: 8)
+
+                    // MARK: — Paket yöneticisi
+                    Theme.sectionLabel(state.t(.packageManagerTitle))
+                    card {
+                        if state.repos.isEmpty {
+                            HStack {
+                                Text(state.t(.noReposFound))
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 15)
+                            .frame(minHeight: 52)
+                        } else {
+                            ForEach(Array(state.repos.enumerated()), id: \.element.id) { idx, repo in
+                                packageManagerRow(repo, isLast: idx == state.repos.count - 1)
+                            }
                         }
                     }
-                    .pickerStyle(.menu)
-                } footer: {
-                    Text(state.t(.editorCaption))
-                }
-
-                // Package managers — one labeled menu row per discovered repo.
-                Section {
-                    if state.repos.isEmpty {
-                        Text(state.t(.noReposFound)).foregroundStyle(.secondary)
-                    }
-                    ForEach(state.repos) { repo in packageManagerRow(repo) }
-                } header: {
-                    Text(state.t(.packageManagerTitle))
-                } footer: {
                     Text(state.t(.packageManagerCaption))
-                }
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.tertiary)
+                        .padding(.horizontal, 6)
 
-                // Startup command — labeled text row.
-                Section {
-                    LabeledContent {
-                        TextField(state.t(.startupPlaceholder), text: Binding(
-                            get: { state.config.terminalStartupCommand },
-                            set: { state.config.terminalStartupCommand = $0 }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit { state.saveConfig() }
-                    } label: {
-                        Text(state.t(.startupCommandTitle))
+                    Spacer().frame(height: 8)
+
+                    // MARK: — Terminal başlangıç komutu
+                    Theme.sectionLabel(state.t(.startupCommandTitle))
+                    card {
+                        DarkTextField(
+                            placeholder: state.t(.startupPlaceholder),
+                            text: Binding(
+                                get: { state.config.terminalStartupCommand },
+                                set: { state.config.terminalStartupCommand = $0 }
+                            ),
+                            onSubmit: { state.saveConfig() }
+                        )
+                        .padding(12)
                     }
-                } footer: {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(state.t(.startupCommandCaption))
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.tertiary)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(state.t(.editConfigHint))
+                                .font(.system(size: 11.5))
+                                .foregroundStyle(.tertiary)
                             Text(ConfigStore.defaultPath.abbreviatingHome)
                                 .font(Theme.mono(11))
                                 .foregroundStyle(.tertiary)
                                 .textSelection(.enabled)
                         }
                     }
+                    .padding(.horizontal, 6)
+
+                    Spacer().frame(height: 16)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 20)
             }
-            .formStyle(.grouped)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -144,13 +207,11 @@ struct SettingsView: View {
     private var header: some View {
         HStack(spacing: 8) {
             SidebarToggle()
-            if state.sidebarCollapsed {
-                TwigMark().frame(width: 18, height: 18)
-                    .foregroundStyle(Brand.signalOrange)
-            }
+            IconTile(systemName: "gearshape.fill",
+                     color: Color(white: 0.45),
+                     side: 30)
             Text(state.t(.settingsTitle))
-                .font(.title3).fontWeight(.semibold)
-                .foregroundStyle(.primary)
+                .font(.system(size: 17, weight: .bold))
             Spacer()
         }
         .padding(.horizontal, 20)
@@ -179,42 +240,78 @@ struct SettingsView: View {
         presets.contains(current) ? presets : [current] + presets
     }
 
+    // MARK: card helper
+
+    /// İkinci seviye yüzey — panel içindeki Keeby form kartı.
+    @ViewBuilder
+    private func card<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) { content() }
+            .background(Color.white.opacity(0.04),
+                        in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
     // MARK: rows
 
     @ViewBuilder
-    private func sourceRow(_ path: String, kind: String, isRepo: Bool) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: isRepo ? "shippingbox" : "folder")
-                .foregroundStyle(.secondary)
-                .frame(width: 16)
-            Text(path.abbreviatingHome)
-                .font(Theme.mono(11))
-                .lineLimit(1)
-                .truncationMode(.middle)
-            Spacer(minLength: 8)
-            Text(kind)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Button(role: .destructive) {
-                state.removeSource(path)
-            } label: {
-                Image(systemName: "minus.circle.fill")
+    private func sourceRow(_ path: String, kind: String, isLast: Bool) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Text(path.abbreviatingHome)
+                    .font(Theme.mono(11))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Spacer(minLength: 8)
+                PillBadge(kind)
+                Button(role: .destructive) {
+                    state.removeSource(path)
+                } label: {
+                    Image(systemName: "minus.circle.fill")
+                        .foregroundStyle(Theme.danger)
+                }
+                .buttonStyle(.borderless)
+                .help(state.t(.remove))
             }
-            .buttonStyle(.borderless)
-            .help(state.t(.remove))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(minHeight: 44)
+            if !isLast {
+                Rectangle()
+                    .fill(Theme.hairline)
+                    .frame(height: 1)
+                    .padding(.leading, 16)
+            }
         }
     }
 
     @ViewBuilder
-    private func packageManagerRow(_ repo: Repo) -> some View {
-        Picker(selection: pmBinding(repo)) {
-            Text(state.t(.pmNone)).tag("none")
-            ForEach(PackageManager.allCases, id: \.self) { pm in
-                Text(pm.label).tag(pm.rawValue)
+    private func packageManagerRow(_ repo: Repo, isLast: Bool) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                IconTile(systemName: "shippingbox.fill",
+                         color: TilePalette.color(for: repo.name),
+                         side: 24)
+                Text(repo.name)
+                    .font(.system(size: 14))
+                Spacer(minLength: 12)
+                Picker("", selection: pmBinding(repo)) {
+                    Text(state.t(.pmNone)).tag("none")
+                    ForEach(PackageManager.allCases, id: \.self) { pm in
+                        Text(pm.label).tag(pm.rawValue)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .buttonStyle(.plain)
             }
-        } label: {
-            Label(repo.name, systemImage: "shippingbox")
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(minHeight: 44)
+            if !isLast {
+                Rectangle()
+                    .fill(Theme.hairline)
+                    .frame(height: 1)
+                    .padding(.leading, 16)
+            }
         }
-        .pickerStyle(.menu)
     }
 }
