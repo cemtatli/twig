@@ -1,32 +1,43 @@
 import SwiftUI
 import AppKit
 
-/// Thin semantic-token + shared-helper layer for Twig.
-///
-/// Twig is an Apple-native menubar utility: it sits on the platform's own design
-/// system — semantic fonts (`.title3` / `.body` / `.caption`), semantic colors
-/// (`Color.primary` / `.secondary` / `.tertiary`), the **system accent** for all
-/// selection and emphasis, and system materials (`.listStyle(.sidebar)`
-/// vibrancy, grouped `Form`). There is intentionally no owned color/control
-/// design system here — that was the old "OpenUsage" direction and it read as
-/// generic. The brand survives only as the `TwigMark` logo and the menubar icon
-/// (the one allowed brand-orange use, in `Brand.signalOrange`).
-///
-/// This file holds just the few things the platform does not give for free: the
-/// git clean/dirty status colors, a mono-font helper reserved for paths/log, the
-/// installed-app discovery, and the sidebar toggle control.
+/// Twig'in Keeby-dili koyu tasarım sistemi: siyah kanvas üzerinde yüzen
+/// yuvarlatılmış paneller, kart dışı gri section başlıkları, kart içi hairline
+/// satırlar, gradient ikon karoları. Uygulama her zaman koyu
+/// (`.preferredColorScheme(.dark)` kökte) — açık tema yok.
+/// Referans: getkeeby.com + spec 2026-07-04-twig-rebrand-keeby-restyle.
 enum Theme {
-    // MARK: Status dots — git worktree clean/dirty. Semantic system green/red so
-    // they adapt to appearance, accent, and accessibility.
+    // MARK: Yüzeyler
+    /// Pencere zemini — paneller arasındaki "boşluk" rengi.
+    static let canvas = Color(red: 0.039, green: 0.039, blue: 0.039)      // #0A0A0A
+    /// Yüzen kart dolgusu.
+    static let panel = Color(red: 0.110, green: 0.110, blue: 0.118)      // #1C1C1E
+    /// Kart kenarına 1px iç kontur — koyu zeminde kenar tanımı.
+    static let panelStroke = Color.white.opacity(0.05)
+    /// Seçili satır dolgusu (Keeby'nin seçili "General" satırı).
+    static let rowSelected = Color(red: 0.173, green: 0.173, blue: 0.180) // #2C2C2E
+    static let rowHover = Color.white.opacity(0.05)
+    /// Kart içi satır ayırıcı.
+    static let hairline = Color.white.opacity(0.07)
+
+    // MARK: Vurgu + durum
+    static let accent = Brand.signalOrange
     static let dotClean = Color(nsColor: .systemGreen)
     static let dotDirty = Color(nsColor: .systemRed)
-
-    /// Error/destructive text color (not buttons — buttons use `role:
-    /// .destructive`). Semantic system red.
     static let danger = Color(nsColor: .systemRed)
 
-    /// Monospace face — reserved for read-only filesystem paths and terminal log
-    /// output. Never for input fields or chrome labels (those are SF Pro).
+    /// Kart panel yarıçapı.
+    static let panelRadius: CGFloat = 14
+
+    /// Kartların DIŞINDA duran gri section başlığı (Keeby "Feel"/"Tone").
+    static func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 6)
+    }
+
+    /// Monospace — sadece salt-okunur yol ve log metni için.
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .monospaced)
     }
@@ -34,11 +45,10 @@ enum Theme {
 
 // MARK: - Brand
 
-/// The Twig brand. Reduced to the single logo color — Twig uses the system accent
-/// for every control, so the brand orange appears ONLY on the `TwigMark` glyph
-/// and the menubar icon.
+/// Twig markası. #FF6A1A artık yalnız logo değil, uygulama geneli kontrol
+/// vurgusu (toggle dolgusu, birincil buton, seçim vurguları).
 enum Brand {
-    /// #FF6A1A — the Twig logo orange. Logo/menubar-icon use only.
+    /// #FF6A1A — Twig turuncusu.
     static let signalOrange = Color(red: 1.0, green: 0.416, blue: 0.102)
 }
 
