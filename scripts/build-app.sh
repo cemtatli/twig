@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds WorktreeGUI.app -- a double-clickable, menubar-only macOS app bundle.
+# Builds Twig.app -- a double-clickable, menubar-only macOS app bundle.
 # Usage:
 #   ./scripts/build-app.sh            # build the .app in the project root
 #   ./scripts/build-app.sh --install  # also copy it to /Applications
@@ -9,14 +9,15 @@ cd "$(dirname "$0")/.."
 BIN_NAME="WorktreeGUI"
 APP_DISPLAY="Twig"
 BUNDLE_ID="com.cem.worktreegui"
-APP="${BIN_NAME}.app"
+# Bundle adı = görünen ad: Spotlight/Finder DOSYA adını gösterir, Info.plist'i değil.
+APP="${APP_DISPLAY}.app"
 
 echo "==> Building release binary"
 swift build -c release
 BIN_PATH="$(swift build -c release --show-bin-path)/${BIN_NAME}"
 
 echo "==> Assembling ${APP}"
-rm -rf "${APP}"
+rm -rf "${APP}" "${BIN_NAME}.app"   # eski isimli bundle da temizlensin
 mkdir -p "${APP}/Contents/MacOS" "${APP}/Contents/Resources"
 cp "${BIN_PATH}" "${APP}/Contents/MacOS/${BIN_NAME}"
 
@@ -53,7 +54,7 @@ echo "OK: built $(pwd)/${APP}"
 
 if [ "${1:-}" = "--install" ]; then
   echo "==> Installing to /Applications"
-  rm -rf "/Applications/${APP}"
+  rm -rf "/Applications/${APP}" "/Applications/${BIN_NAME}.app"
   cp -R "${APP}" "/Applications/${APP}"
   echo "OK: installed /Applications/${APP} -- launch from Spotlight/Launchpad."
 fi
