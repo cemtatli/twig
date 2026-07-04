@@ -279,10 +279,15 @@ struct MenuContentView: View {
                     .font(.system(size: 17, weight: .bold))
                 if state.isRefreshing { ProgressView().controlSize(.small).padding(.leading, 2) }
                 Spacer()
+                // Yenile — New kapsülüyle aynı boy/krom, nötr koyu dolgulu ikon buton.
                 Button { state.refresh() } label: {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .medium))
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 11).padding(.vertical, 7)
+                        .background(Color.white.opacity(0.08), in: Capsule())
                 }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
+                .buttonStyle(.plain)
                 .help(state.t(.refresh)).accessibilityLabel(state.t(.refresh))
                 .keyboardShortcut("r")
                 Button { withAnimation(selectAnim) { pane = .newWorktree } } label: {

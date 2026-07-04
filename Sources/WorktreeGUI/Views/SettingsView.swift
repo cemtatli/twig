@@ -23,7 +23,9 @@ struct SettingsView: View {
                     // MARK: — Dil
                     Theme.sectionLabel(state.t(.languageTitle))
                     card {
-                        SettingsRow(title: state.t(.languageTitle), showsHairline: false) {
+                        SettingsRow(title: state.t(.languageTitle),
+                                    subtitle: state.t(.languageCaption),
+                                    showsHairline: false) {
                             Picker("", selection: Binding(
                                 get: { state.language },
                                 set: { state.setLanguage($0) }
@@ -36,10 +38,6 @@ struct SettingsView: View {
                             .labelsHidden()
                         }
                     }
-                    Text(state.t(.languageCaption))
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 6)
 
                     Spacer().frame(height: 8)
 
@@ -76,35 +74,34 @@ struct SettingsView: View {
                         state.addReposViaPanel()
                     }
                     .padding(.horizontal, 6)
-                    Text(state.t(.repoSourcesCaption))
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 6)
+                    infoRow(state.t(.repoSourcesCaption))
 
                     Spacer().frame(height: 8)
 
-                    // MARK: — Tarama derinliği
+                    // MARK: — Tarama derinliği (Keeby "Volume" satırı: etiket + pill + slider)
                     Theme.sectionLabel(state.t(.scanDepthTitle))
                     card {
-                        SettingsRow(title: state.t(.scanDepthTitle), showsHairline: false) {
-                            Picker("", selection: depthBinding) {
-                                ForEach(1...5, id: \.self) { Text("\($0)").tag($0) }
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
+                        HStack(alignment: .center, spacing: 10) {
+                            Text(state.t(.scanDepthTitle))
+                                .font(.system(size: 14))
+                            PillBadge("\(state.config.scanDepth)")
+                            Spacer(minLength: 12)
+                            Slider(value: depthSlider, in: 1...5, step: 1)
+                                .frame(width: 190)
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .frame(minHeight: 52)
                     }
-                    Text(state.t(.scanDepthCaption))
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 6)
+                    infoRow(state.t(.scanDepthCaption))
 
                     Spacer().frame(height: 8)
 
                     // MARK: — Terminal + Editör (tek kart)
                     Theme.sectionLabel("\(state.t(.terminalTitle)) & \(state.t(.editorTitle))")
                     card {
-                        SettingsRow(title: state.t(.terminalTitle)) {
+                        SettingsRow(title: state.t(.terminalTitle),
+                                    subtitle: state.t(.terminalCaption)) {
                             Picker("", selection: appBinding(\.terminalApp)) {
                                 ForEach(options(state.config.terminalApp, terminals), id: \.self) {
                                     Text($0).tag($0)
@@ -114,7 +111,9 @@ struct SettingsView: View {
                             .pickerStyle(.menu)
                             .buttonStyle(.plain)
                         }
-                        SettingsRow(title: state.t(.editorTitle), showsHairline: false) {
+                        SettingsRow(title: state.t(.editorTitle),
+                                    subtitle: state.t(.editorCaption),
+                                    showsHairline: false) {
                             Picker("", selection: appBinding(\.editorApp)) {
                                 ForEach(options(state.config.editorApp, editors), id: \.self) {
                                     Text($0).tag($0)
@@ -125,15 +124,6 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(state.t(.terminalCaption))
-                            .font(.system(size: 11.5))
-                            .foregroundStyle(.tertiary)
-                        Text(state.t(.editorCaption))
-                            .font(.system(size: 11.5))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding(.horizontal, 6)
 
                     Spacer().frame(height: 8)
 
@@ -156,10 +146,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    Text(state.t(.packageManagerCaption))
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 6)
+                    infoRow(state.t(.packageManagerCaption))
 
                     Spacer().frame(height: 8)
 
@@ -176,21 +163,16 @@ struct SettingsView: View {
                         )
                         .padding(12)
                     }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(state.t(.startupCommandCaption))
+                    VStack(alignment: .leading, spacing: 6) {
+                        infoRow(state.t(.startupCommandCaption))
+                        infoRow(state.t(.editConfigHint))
+                        Text(ConfigStore.defaultPath.abbreviatingHome)
                             .font(.system(size: 11.5))
                             .foregroundStyle(.tertiary)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(state.t(.editConfigHint))
-                                .font(.system(size: 11.5))
-                                .foregroundStyle(.tertiary)
-                            Text(ConfigStore.defaultPath.abbreviatingHome)
-                                .font(Theme.mono(11))
-                                .foregroundStyle(.tertiary)
-                                .textSelection(.enabled)
-                        }
+                            .textSelection(.enabled)
+                            .padding(.leading, 21)   // info ikonu hizası
+                            .padding(.horizontal, 6)
                     }
-                    .padding(.horizontal, 6)
 
                     Spacer().frame(height: 16)
                 }
@@ -221,9 +203,16 @@ struct SettingsView: View {
 
     // MARK: bindings (apply + persist immediately)
 
-    private var depthBinding: Binding<Int> {
-        Binding(get: { state.config.scanDepth },
-                set: { state.config.scanDepth = $0; state.saveConfig() })
+    /// Slider Double ister; yalnız değer gerçekten değişince yaz (sürükleme
+    /// boyunca her tick'te config dosyasına yazmamak için).
+    private var depthSlider: Binding<Double> {
+        Binding(get: { Double(state.config.scanDepth) },
+                set: {
+                    let v = Int($0.rounded())
+                    guard v != state.config.scanDepth else { return }
+                    state.config.scanDepth = v
+                    state.saveConfig()
+                })
     }
 
     private func appBinding(_ keyPath: WritableKeyPath<Config, String>) -> Binding<String> {
@@ -238,6 +227,22 @@ struct SettingsView: View {
 
     private func options(_ current: String, _ presets: [String]) -> [String] {
         presets.contains(current) ? presets : [current] + presets
+    }
+
+    // MARK: info row
+
+    /// Kart altı bilgi satırı — info ikonu + mesaj (Keeby ⓘ deseni).
+    @ViewBuilder
+    private func infoRow(_ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 5) {
+            Image(systemName: "info.circle")
+                .font(.system(size: 10.5))
+                .foregroundStyle(.tertiary)
+            Text(text)
+                .font(.system(size: 11.5))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 6)
     }
 
     // MARK: card helper
@@ -257,7 +262,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Text(path.abbreviatingHome)
-                    .font(Theme.mono(11))
+                    .font(.system(size: 12.5))
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Spacer(minLength: 8)
