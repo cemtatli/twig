@@ -16,7 +16,7 @@ struct MenuContentView: View {
     @State private var dragTranslation: CGFloat = 0
     @FocusState private var navFocused: Bool
 
-    private let repoRowHeight: CGFloat = 34
+    private let repoRowHeight: CGFloat = 38
 
     private var selectedRepo: Repo? {
         state.repos.first { $0.path == selectedRepoPath } ?? state.repos.first
@@ -27,23 +27,19 @@ struct MenuContentView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 10) {
             if !state.sidebarCollapsed {
                 sidebar
                     .frame(width: 190)
                     .transition(.move(edge: .leading).combined(with: .opacity))
-                Divider()
             }
-            ZStack {
-                detail
-                    .id(pane)
-                    .transition(paneTransition)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipped()
+            FloatingPanel { detail.id(pane).transition(paneTransition) }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(width: 540, height: 500)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .padding(10)
+        .frame(width: 560, height: 520)
+        .background(Theme.canvas)
+        .preferredColorScheme(.dark)
         .focusable()
         .focused($navFocused)
         .focusEffectDisabled()
@@ -94,7 +90,7 @@ struct MenuContentView: View {
         withAnimation(selectAnim) { selectedRepoPath = state.repos[next].path; pane = .repo }
     }
 
-    // MARK: Sidebar — native source list
+    // MARK: Sidebar — two stacked floating cards
 
     /// Repos grouped by their parent folder, preserving first-appearance order.
     /// The group name becomes a source-list `Section` header (shown once) so the
@@ -111,47 +107,71 @@ struct MenuContentView: View {
     }
 
     private var sidebar: some View {
-        VStack(spacing: 0) {
-            TwigMark()
-                .frame(width: 22, height: 22)
-                .foregroundStyle(Brand.signalOrange)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 14).padding(.bottom, 10)
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 1) {
-                    ForEach(groupedRepos, id: \.group) { section in
-                        Text(section.group)
-                            .font(.caption).fontWeight(.semibold)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 10).padding(.top, 10).padding(.bottom, 4)
-                        ForEach(Array(section.repos.enumerated()), id: \.element.repo.id) { pos, entry in
-                            repoRowView(repo: entry.repo, globalIndex: entry.index,
-                                        group: section.group, posInGroup: pos,
-                                        groupCount: section.repos.count)
+        VStack(spacing: 10) {
+            FloatingPanel {
+                VStack(spacing: 0) {
+                    TwigWordmark(size: 15)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14).padding(.top, 14).padding(.bottom, 6)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(groupedRepos, id: \.group) { section in
+                                Text(section.group)
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+                                ForEach(Array(section.repos.enumerated()), id: \.element.repo.id) { pos, entry in
+                                    repoRowView(repo: entry.repo, globalIndex: entry.index,
+                                                group: section.group, posInGroup: pos,
+                                                groupCount: section.repos.count)
+                                }
+                            }
                         }
+                        .padding(.horizontal, 8).padding(.bottom, 8)
                     }
                 }
-                .padding(.horizontal, 6).padding(.bottom, 8)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            Divider()
-            HStack(spacing: 4) {
-                railButton("folder.badge.plus", label: state.t(.addRepo)) { state.addReposViaPanel() }
-                railButton("gearshape", label: state.t(.settings), active: pane == .settings,
-                           shortcut: ",") {
-                    withAnimation(selectAnim) { pane = .settings }
+            FloatingPanel {
+                VStack(spacing: 0) {
+                    utilityRow(symbol: "folder.badge.plus", tile: Color(red: 0.28, green: 0.64, blue: 0.97),
+                               label: state.t(.addRepo)) { state.addReposViaPanel() }
+                    Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 48)
+                    utilityRow(symbol: "gearshape.fill", tile: Color(white: 0.45),
+                               label: state.t(.settings), active: pane == .settings, shortcut: ",") {
+                        withAnimation(selectAnim) { pane = .settings }
+                    }
+                    Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 48)
+                    utilityRow(symbol: "power", tile: Color(red: 0.94, green: 0.31, blue: 0.36),
+                               label: state.t(.quit), shortcut: "q") {
+                        NSApplication.shared.terminate(nil)
+                    }
                 }
-                Spacer()
-                railButton("power", label: state.t(.quit), shortcut: "q") {
-                    NSApplication.shared.terminate(nil)
-                }
+                .padding(.vertical, 6)
             }
-            .padding(.horizontal, 10).padding(.vertical, 8)
         }
-        // Material değil düz tint: SwiftUI materyalleri pencere ARKASINI örnekler
-        // (kardeş katmandaki opak zemini değil), popover'da masaüstü sızıyordu.
-        .background(Color.primary.opacity(0.04))
+    }
+
+    private func utilityRow(symbol: String, tile: Color, label: String,
+                            active: Bool = false, shortcut: KeyEquivalent? = nil,
+                            action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                IconTile(systemName: symbol, color: tile, side: 26)
+                Text(label).font(.system(size: 13, weight: .medium))
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 6)
+            .background(active ? Theme.rowSelected : .clear,
+                        in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 6)
+        .help(label)
+        .accessibilityLabel(label)
+        .modifier(OptionalShortcut(key: shortcut))
     }
 
     /// One repo row. A custom row (not a `List`) so drag-to-reorder can use a
@@ -169,18 +189,20 @@ struct MenuContentView: View {
                            value: isHovered || isDragging)
                 .highPriorityGesture(reorderGesture(repo: repo, group: group,
                                                     posInGroup: posInGroup, groupCount: groupCount))
-            Label(repo.name, systemImage: "shippingbox").font(.body)
+            IconTile(systemName: "shippingbox.fill",
+                     color: TilePalette.color(for: repo.name), side: 26)
+            Text(repo.name).font(.system(size: 13, weight: .medium))
             Spacer(minLength: 0)
         }
         .lineLimit(1)
         .padding(.horizontal, 8)
         .frame(height: repoRowHeight)
-        .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+        .foregroundStyle(.primary)
         .background(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(isSelected ? AnyShapeStyle(Color(nsColor: .selectedContentBackgroundColor))
-                      : isHovered ? AnyShapeStyle(Color.primary.opacity(0.08))
-                      : AnyShapeStyle(Color.clear))
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(isSelected ? Theme.rowSelected
+                      : isHovered ? Theme.rowHover
+                      : Color.clear)
         )
         .contentShape(Rectangle())
         .onTapGesture { withAnimation(selectAnim) { selectedRepoPath = repo.path; pane = .repo } }
@@ -226,22 +248,6 @@ struct MenuContentView: View {
             }
     }
 
-    private func railButton(_ symbol: String, label: String, active: Bool = false,
-                            shortcut: KeyEquivalent? = nil,
-                            action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 14, weight: .medium))
-                .frame(width: 30, height: 26)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.borderless)
-        .foregroundStyle(active ? Color.accentColor : Color.secondary)
-        .help(label)
-        .accessibilityLabel(label)
-        .modifier(OptionalShortcut(key: shortcut))
-    }
-
     // MARK: Detail
 
     @ViewBuilder
@@ -261,24 +267,27 @@ struct MenuContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 8) {
                 SidebarToggle()
-                if state.sidebarCollapsed {
-                    TwigMark().frame(width: 18, height: 18)
-                        .foregroundStyle(Brand.signalOrange)
-                }
+                IconTile(systemName: "shippingbox.fill",
+                         color: TilePalette.color(for: repo.name), side: 30)
                 Text(repo.name)
-                    .font(.title3).fontWeight(.semibold)
+                    .font(.system(size: 17, weight: .bold))
                 if state.isRefreshing { ProgressView().controlSize(.small).padding(.leading, 2) }
                 Spacer()
                 Button { state.refresh() } label: {
                     Image(systemName: "arrow.clockwise").font(.system(size: 13, weight: .medium))
                 }
-                .buttonStyle(.borderless).foregroundStyle(.secondary)
+                .buttonStyle(.plain).foregroundStyle(.secondary)
                 .help(state.t(.refresh)).accessibilityLabel(state.t(.refresh))
                 .keyboardShortcut("r")
                 Button { withAnimation(selectAnim) { pane = .newWorktree } } label: {
                     Label(state.t(.new), systemImage: "plus")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14).padding(.vertical, 7)
+                        .background(Theme.accent, in: Capsule())
                 }
-                .buttonStyle(.borderedProminent).help(state.t(.newWorktreeHelp))
+                .buttonStyle(.plain)
+                .help(state.t(.newWorktreeHelp))
                 .keyboardShortcut("n")
             }
             .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
@@ -288,23 +297,26 @@ struct MenuContentView: View {
                     .font(.caption).foregroundStyle(Theme.danger).lineLimit(2)
                     .padding(.horizontal, 20).padding(.bottom, 10)
             }
-            Divider()
+            Rectangle().fill(Theme.hairline).frame(height: 1)
 
             let worktrees = state.worktreesByRepo[repo.path] ?? []
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 1) {
+                LazyVStack(spacing: 0) {
                     if worktrees.isEmpty {
                         emptyWorktrees
                     }
-                    ForEach(Array(worktrees.enumerated()), id: \.element.id) { _, wt in
+                    ForEach(Array(worktrees.enumerated()), id: \.element.id) { idx, wt in
                         worktreeRow(repo: repo, wt: wt)
+                        if idx < worktrees.count - 1 {
+                            Rectangle().fill(Theme.hairline).frame(height: 1)
+                                .padding(.leading, 16)
+                        }
                     }
                 }
-                .padding(.horizontal, 8).padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Divider()
+            Rectangle().fill(Theme.hairline).frame(height: 1)
             HStack(spacing: 0) {
                 Text(state.worktreeCountText(worktrees.count))
                     .font(.caption).foregroundStyle(.secondary)
@@ -321,7 +333,7 @@ struct MenuContentView: View {
         VStack(spacing: 8) {
             TwigMark()
                 .frame(width: 26, height: 26)
-                .foregroundStyle(Brand.signalOrange)
+                .foregroundStyle(Theme.accent)
             Text(state.t(.noWorktreesYet)).font(.headline)
                 .foregroundStyle(.secondary)
             Text(state.t(.createFirstWorktree))
@@ -371,11 +383,8 @@ struct MenuContentView: View {
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hovered)
             }
         }
-        .padding(.horizontal, 12).padding(.vertical, 9)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(hovered ? Color.primary.opacity(0.06) : .clear)
-        )
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .background(hovered ? Theme.rowHover : .clear)
         .contentShape(Rectangle())
         // Satır düzeyinde tooltip — 6pt durum noktası tek başına hover hedefi
         // olamayacak kadar küçük.
@@ -451,7 +460,7 @@ struct MenuContentView: View {
 }
 
 /// `.keyboardShortcut` kabul eden ama nil'de hiçbir şey eklemeyen sarmalayıcı —
-/// railButton'ın opsiyonel kısayol parametresi için.
+/// utilityRow'un opsiyonel kısayol parametresi için.
 private struct OptionalShortcut: ViewModifier {
     let key: KeyEquivalent?
     func body(content: Content) -> some View {
