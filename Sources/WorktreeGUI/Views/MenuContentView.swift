@@ -6,7 +6,7 @@ struct MenuContentView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    enum Pane: Equatable { case repo, settings, newWorktree }
+    enum Pane: Equatable { case repo, settings, shortcuts, newWorktree }
     @State private var pane: Pane = .repo
     @State private var selectedRepoPath: String?
     @State private var confirmingRemovalPath: String?
@@ -35,7 +35,7 @@ struct MenuContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(10)
-        .frame(width: 640, height: 540)
+        .frame(width: 720, height: 560)
         .background(Theme.canvas)
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
@@ -137,6 +137,11 @@ struct MenuContentView: View {
                     utilityRow(symbol: "folder.badge.plus", tile: Color(red: 0.28, green: 0.64, blue: 0.97),
                                label: state.t(.addRepo)) { state.addReposViaPanel() }
                     Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 52)
+                    utilityRow(symbol: "keyboard.fill", tile: Color(red: 0.55, green: 0.42, blue: 0.9),
+                               label: state.t(.shortcutsTitle), active: pane == .shortcuts) {
+                        withAnimation(selectAnim) { pane = .shortcuts }
+                    }
+                    Rectangle().fill(Theme.hairline).frame(height: 1).padding(.leading, 52)
                     utilityRow(symbol: "gearshape.fill", tile: Color(white: 0.45),
                                label: state.t(.settings), active: pane == .settings, shortcut: ",") {
                         withAnimation(selectAnim) { pane = .settings }
@@ -225,6 +230,8 @@ struct MenuContentView: View {
         switch pane {
         case .settings:
             SettingsView()
+        case .shortcuts:
+            ShortcutsView()
         case .newWorktree:
             if let repo = selectedRepo { NewWorktreeForm(repo: repo, onClose: { withAnimation(selectAnim) { pane = .repo } }) }
             else { emptyState }
