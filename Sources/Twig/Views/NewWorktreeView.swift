@@ -1,5 +1,5 @@
 import SwiftUI
-import WorktreeCore
+import TwigCore
 
 /// Inline "new worktree" pane shown in the popover's detail area.
 struct NewWorktreeForm: View {

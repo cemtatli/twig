@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 import AppKit
-import WorktreeCore
+import TwigCore
 
 @MainActor
 final class AppState: ObservableObject {

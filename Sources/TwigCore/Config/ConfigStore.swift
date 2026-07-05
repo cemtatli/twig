@@ -6,7 +6,7 @@ public struct ConfigStore {
     public init(path: String) { self.path = path }
 
     public static var defaultPath: String {
-        Config.expandTilde("~/.config/worktree-gui/config.json")
+        Config.expandTilde("~/.config/twig/config.json")
     }
 
     public func load() throws -> Config {

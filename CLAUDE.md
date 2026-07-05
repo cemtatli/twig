@@ -4,18 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-WorktreeGUI is a macOS menubar-only app (`LSUIElement`/`.accessory` — no dock icon) for creating and managing `git worktree`s across many local repos. The user scans roots like `~/Dev`, picks a repo, and creates a worktree on a new or existing branch; the app applies `.env` rules, runs package-manager install + setup commands, and opens the worktree in an editor/terminal.
+Twig is a macOS menubar-only app (`LSUIElement`/`.accessory` — no dock icon) for creating and managing `git worktree`s across many local repos. The user scans roots like `~/Dev`, picks a repo, and creates a worktree on a new or existing branch; the app applies `.env` rules, runs package-manager install + setup commands, and opens the worktree in an editor/terminal.
 
 ## Commands
 
 ```bash
 swift build                              # debug build
-swift test                               # run all tests (WorktreeCoreTests only)
+swift test                               # run all tests (TwigCoreTests only)
 swift test --filter WorktreeCreatorTests # one test class
 swift test --filter WorktreeCreatorTests/testCreateRunsSetupCommands  # one test
-swift run WorktreeGUI                    # run from terminal (menubar item appears)
+swift run Twig                           # run from terminal (menubar item appears)
 
-./scripts/build-app.sh                   # build WorktreeGUI.app bundle (ad-hoc signed) in project root
+./scripts/build-app.sh                   # build Twig.app bundle (ad-hoc signed) in project root
 ./scripts/build-app.sh --install         # also copy to /Applications
 ```
 
@@ -25,8 +25,8 @@ Tooling: Swift Package Manager, `swift-tools-version: 5.9`, macOS 14+. No extern
 
 Two targets with a hard one-way dependency:
 
-- **`WorktreeCore`** (library) — all logic, no SwiftUI/AppKit. Fully unit-tested. **All tests live here**; the GUI target has no tests.
-- **`WorktreeGUI`** (executable) — SwiftUI menubar app. Depends on `WorktreeCore`. Keep AppKit/SwiftUI out of Core.
+- **`TwigCore`** (library) — all logic, no SwiftUI/AppKit. Fully unit-tested. **All tests live here**; the GUI target has no tests.
+- **`Twig`** (executable) — SwiftUI menubar app. Depends on `TwigCore`. Keep AppKit/SwiftUI out of Core.
 
 ### The ProcessRunner seam
 
@@ -47,7 +47,7 @@ The long-running dev server (`yarn dev`/`npm run dev`) is **not** run here — `
 
 ### Config & placeholders
 
-Config is a single JSON file at `~/.config/worktree-gui/config.json` (`ConfigStore`). `Config.init(from:)` decodes resiliently — missing keys fall back to `Config.default` rather than throwing, so hand-edited/older files still load.
+Config is a single JSON file at `~/.config/twig/config.json` (`ConfigStore`). `Config.init(from:)` decodes resiliently — missing keys fall back to `Config.default` rather than throwing, so hand-edited/older files still load.
 
 Per-repo settings are keyed by `"{group}/{repo}"`. Resolution is always **repo-specific value, else `defaults`** (see `RepoSettings?.x ?? config.defaults.x` throughout). Path/command templates use `{group} {repo} {type} {taskName} {branch}` placeholders resolved by `PlaceholderResolver`, which throws on an unknown token. Default worktree path template: `{group}/task/{type}-{taskName}`. `{type}` falls back to the substring after the first `-` in the repo name.
 
@@ -55,7 +55,7 @@ Per-repo settings are keyed by `"{group}/{repo}"`. Resolution is always **repo-s
 
 ### GUI
 
-`WorktreeGUIApp` → `MenuBarExtra(... .window)` → `MenuContentView` (master-detail: repo list + New Worktree / Settings panes in `Views/`). `AppState` (`@MainActor ObservableObject`) is the single source of truth and the only bridge into Core. Scanning and per-repo `git worktree list` run on `Task.detached` off the main thread so the popover never freezes; results are published back via `MainActor.run`. `Theme.swift` holds the dark token set and `Controls.swift` the custom control family (FloatingPanel, IconTile, PillTabBar, TwigToggle, SettingsRow, …) — see the design-direction notes below before changing visuals.
+`TwigApp` → `MenuBarExtra(... .window)` → `MenuContentView` (master-detail: repo list + New Worktree / Settings panes in `Views/`). `AppState` (`@MainActor ObservableObject`) is the single source of truth and the only bridge into Core. Scanning and per-repo `git worktree list` run on `Task.detached` off the main thread so the popover never freezes; results are published back via `MainActor.run`. `Theme.swift` holds the dark token set and `Controls.swift` the custom control family (FloatingPanel, IconTile, PillTabBar, TwigToggle, SettingsRow, …) — see the design-direction notes below before changing visuals.
 
 ## Conventions
 
@@ -66,4 +66,4 @@ Per-repo settings are keyed by `"{group}/{repo}"`. Resolution is always **repo-s
 
 ## Design skills
 
-`.agents/skills/` contains `macos-design-guidelines` and `swiftui-expert-skill` (SKILL.md each) — consult them when changing UI. The app is branded **Twig** and its current visual direction is a Keeby-style custom dark design system (dark-only, orange #FF6A1A accent, floating rounded panels on a near-black canvas, gray section labels outside cards, custom controls — no native segmented/bezeled chrome). Spec: `docs/superpowers/specs/2026-07-04-twig-rebrand-keeby-restyle-design.md`.
+`.agents/skills/` contains `macos-design-guidelines` and `swiftui-expert-skill` (SKILL.md each) — consult them when changing UI. The app is branded **Twig** and its current visual direction is a Keeby-style custom dark design system (dark-only, orange #FF6A1A accent, floating rounded panels on a near-black canvas, gray section labels outside cards, custom controls — no native segmented/bezeled chrome).

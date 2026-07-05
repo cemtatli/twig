@@ -1,5 +1,5 @@
 import SwiftUI
-import WorktreeCore
+import TwigCore
 
 /// Kısayollar paneli — eskiden Ayarlar içinde bir section'dı; artık sidebar'da
 /// Ayarlar'ın üstünde ayrı bir menü. Salt bilgi: uygulamanın sistem kısayolları.

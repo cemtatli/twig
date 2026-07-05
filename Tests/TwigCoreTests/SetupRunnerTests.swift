@@ -1,5 +1,5 @@
 import XCTest
-@testable import WorktreeCore
+@testable import TwigCore
 
 final class SetupRunnerTests: XCTestCase {
     func testUpdateEnvLineReplacesOnlyTargetKey() {

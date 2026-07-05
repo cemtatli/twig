@@ -2,17 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "WorktreeGUI",
+    name: "Twig",
     platforms: [.macOS(.v14)],
     targets: [
-        .target(name: "WorktreeCore"),
+        .target(name: "TwigCore"),
         .executableTarget(
-            name: "WorktreeGUI",
-            dependencies: ["WorktreeCore"]
+            name: "Twig",
+            dependencies: ["TwigCore"]
         ),
         .testTarget(
-            name: "WorktreeCoreTests",
-            dependencies: ["WorktreeCore"]
+            name: "TwigCoreTests",
+            dependencies: ["TwigCore"]
         ),
     ]
 )

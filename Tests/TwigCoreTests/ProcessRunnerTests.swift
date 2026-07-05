@@ -1,5 +1,5 @@
 import XCTest
-@testable import WorktreeCore
+@testable import TwigCore
 
 final class ProcessRunnerTests: XCTestCase {
     func testSystemRunnerRunsEcho() throws {

@@ -1,6 +1,6 @@
 import SwiftUI
 import AppKit
-import WorktreeCore
+import TwigCore
 
 struct MenuContentView: View {
     @EnvironmentObject var state: AppState

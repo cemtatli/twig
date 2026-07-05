@@ -1,5 +1,5 @@
 import Foundation
-@testable import WorktreeCore
+@testable import TwigCore
 
 final class FakeProcessRunner: ProcessRunner {
     struct Call: Equatable {

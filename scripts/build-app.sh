@@ -6,9 +6,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-BIN_NAME="WorktreeGUI"
+BIN_NAME="Twig"
 APP_DISPLAY="Twig"
-BUNDLE_ID="com.cem.worktreegui"
+BUNDLE_ID="com.twig.app"
 # Bundle adı = görünen ad: Spotlight/Finder DOSYA adını gösterir, Info.plist'i değil.
 APP="${APP_DISPLAY}.app"
 

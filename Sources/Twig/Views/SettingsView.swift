@@ -1,6 +1,6 @@
 import SwiftUI
 import AppKit
-import WorktreeCore
+import TwigCore
 
 /// Settings pane shown inside the popover's detail area (not a separate window).
 ///

@@ -6,6 +6,5 @@ DerivedData/
 .superpowers/
 
 # Built app bundle
-WorktreeGUI.app/
 Twig.app/
 .claude/
