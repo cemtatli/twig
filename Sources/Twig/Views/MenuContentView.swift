@@ -42,8 +42,8 @@ struct MenuContentView: View {
         .background(Theme.canvas)
         .overlay { if !state.config.onboardingCompleted { OnboardingView() } }
         .overlay(ToastOverlay())
-        // Menubar popover açılışı: üstten hafif düşerek + solarak gelir.
-        .scaleEffect(reduceMotion ? 1 : (appeared ? 1 : 0.96), anchor: .top)
+        // Menubar popover açılışı: yukarıdan aşağı kayarak + solarak gelir.
+        .offset(y: reduceMotion ? 0 : (appeared ? 0 : -24))
         .opacity(reduceMotion ? 1 : (appeared ? 1 : 0))
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
