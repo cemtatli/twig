@@ -69,24 +69,30 @@ public struct Config: Codable, Equatable {
     public var repoOrder: [String]
     /// Sidebar'da favori olarak sabitlenen repolar, "{group}/{repo}" anahtarları.
     public var favoriteRepos: [String]
+    /// Sidebar'da katlanmış (collapsed) section anahtarları — grup adı ya da
+    /// favoriler için "★favorites" sentinel'i.
+    public var collapsedSections: [String]
     public var defaults: Defaults
 
     public init(scanRoots: [String], scanDepth: Int, manualRepos: [String],
                 terminalApp: String, editorApp: String,
                 terminalStartupCommand: String = "", language: String = "en",
                 repos: [String: RepoSettings], repoOrder: [String] = [],
-                favoriteRepos: [String] = [], defaults: Defaults) {
+                favoriteRepos: [String] = [], collapsedSections: [String] = [],
+                defaults: Defaults) {
         self.scanRoots = scanRoots; self.scanDepth = scanDepth; self.manualRepos = manualRepos
         self.terminalApp = terminalApp; self.editorApp = editorApp
         self.terminalStartupCommand = terminalStartupCommand
         self.language = language
         self.repos = repos; self.repoOrder = repoOrder
-        self.favoriteRepos = favoriteRepos; self.defaults = defaults
+        self.favoriteRepos = favoriteRepos; self.collapsedSections = collapsedSections
+        self.defaults = defaults
     }
 
     private enum CodingKeys: String, CodingKey {
         case scanRoots, scanDepth, manualRepos, terminalApp, editorApp
-        case terminalStartupCommand, language, repos, repoOrder, favoriteRepos, defaults
+        case terminalStartupCommand, language, repos, repoOrder, favoriteRepos
+        case collapsedSections, defaults
     }
 
     // Resilient decoding: a hand-edited or older config.json missing keys
@@ -104,6 +110,7 @@ public struct Config: Codable, Equatable {
         repos = try c.decodeIfPresent([String: RepoSettings].self, forKey: .repos) ?? [:]
         repoOrder = try c.decodeIfPresent([String].self, forKey: .repoOrder) ?? []
         favoriteRepos = try c.decodeIfPresent([String].self, forKey: .favoriteRepos) ?? []
+        collapsedSections = try c.decodeIfPresent([String].self, forKey: .collapsedSections) ?? []
         defaults = try c.decodeIfPresent(Defaults.self, forKey: .defaults) ?? d.defaults
     }
 

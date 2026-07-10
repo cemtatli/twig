@@ -29,14 +29,14 @@ struct MenuContentView: View {
         HStack(spacing: 10) {
             if !state.sidebarCollapsed {
                 sidebar
-                    .frame(width: 190)
+                    .frame(width: 230)
                     .transition(.move(edge: .leading).combined(with: .opacity))
             }
             FloatingPanel { detail.id(pane).transition(paneTransition) }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding(10)
-        .frame(width: 720, height: 560)
+        .frame(width: 780, height: 560)
         .background(Theme.canvas)
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
@@ -118,19 +118,24 @@ struct MenuContentView: View {
                             // Favoriler — en üstte sabit. Repolar grubunda da kalır.
                             let favorites = state.favoriteRepos
                             if !favorites.isEmpty {
-                                sectionHeader(state.t(.favoritesSection))
-                                ForEach(favorites) { repo in
-                                    repoRowView(repo: repo, globalIndex: repoIndex(repo),
-                                                group: repo.group, posInGroup: 0,
-                                                groupCount: 1, inFavorites: true)
+                                let favKey = AppState.favoritesSectionKey
+                                sectionHeader(state.t(.favoritesSection), key: favKey)
+                                if !state.isSectionCollapsed(favKey) {
+                                    ForEach(favorites) { repo in
+                                        repoRowView(repo: repo, globalIndex: repoIndex(repo),
+                                                    group: repo.group, posInGroup: 0,
+                                                    groupCount: 1, inFavorites: true)
+                                    }
                                 }
                             }
                             ForEach(groupedRepos, id: \.group) { section in
-                                sectionHeader(section.group)
-                                ForEach(Array(section.repos.enumerated()), id: \.element.repo.id) { pos, entry in
-                                    repoRowView(repo: entry.repo, globalIndex: entry.index,
-                                                group: section.group, posInGroup: pos,
-                                                groupCount: section.repos.count)
+                                sectionHeader(section.group, key: section.group)
+                                if !state.isSectionCollapsed(section.group) {
+                                    ForEach(Array(section.repos.enumerated()), id: \.element.repo.id) { pos, entry in
+                                        repoRowView(repo: entry.repo, globalIndex: entry.index,
+                                                    group: section.group, posInGroup: pos,
+                                                    groupCount: section.repos.count)
+                                    }
                                 }
                             }
                         }
@@ -189,12 +194,26 @@ struct MenuContentView: View {
     /// One repo row. Sıralama yalnız context menüden (Yukarı/Aşağı Taşı) —
     /// grip'li drag-to-reorder popover içinde güvenilir çalışmadığı için
     /// kaldırıldı.
-    /// Section başlığı — grup ve Favoriler için ortak stil.
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.secondary)
+    /// Section başlığı — tıkla katla/aç. Grup ve Favoriler için ortak stil.
+    private func sectionHeader(_ title: String, key: String) -> some View {
+        let collapsed = state.isSectionCollapsed(key)
+        return Button {
+            withAnimation(selectAnim) { state.toggleSection(key) }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(collapsed ? 0 : 90))
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+            }
             .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func repoRowView(repo: Repo, globalIndex: Int, group: String,

@@ -220,6 +220,19 @@ final class AppState: ObservableObject {
         try? store.save(config)
     }
 
+    /// Sidebar section katlama — favoriler için "★favorites", diğerleri grup adı.
+    static let favoritesSectionKey = "★favorites"
+
+    func isSectionCollapsed(_ key: String) -> Bool {
+        config.collapsedSections.contains(key)
+    }
+
+    func toggleSection(_ key: String) {
+        if let i = config.collapsedSections.firstIndex(of: key) { config.collapsedSections.remove(at: i) }
+        else { config.collapsedSections.append(key) }
+        try? store.save(config)   // @Published config mutasyonu sidebar'ı tazeler
+    }
+
     /// Favori repolar, config sırasıyla; artık taranmayan anahtarlar atlanır.
     var favoriteRepos: [Repo] {
         config.favoriteRepos.compactMap { key in

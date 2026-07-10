@@ -77,4 +77,16 @@ final class ConfigStoreTests: XCTestCase {
         let config = try JSONDecoder().decode(Config.self, from: json)
         XCTAssertEqual(config.favoriteRepos, ["example_repos/example-admin", "example_repos/example-mobile"])
     }
+
+    func testCollapsedSectionsDefaultsToEmptyWhenMissing() throws {
+        let json = #"{"scanRoots":["~/Dev"]}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertEqual(config.collapsedSections, [])
+    }
+
+    func testCollapsedSectionsDecodesWhenPresent() throws {
+        let json = #"{"collapsedSections":["Dev","★favorites"]}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertEqual(config.collapsedSections, ["Dev", "★favorites"])
+    }
 }
