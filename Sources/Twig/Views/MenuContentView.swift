@@ -74,7 +74,10 @@ struct MenuContentView: View {
             default: break
             }
         }
-        if pane == .newWorktree { return .ignored }
+        // Repo/worktree gezinme kısayolları (1-9, ok/tab) yalnız repo listesi
+        // pane'inde. Ayarlar/Kısayollar/Yeni/Config pane'lerinde çalışsalar
+        // kullanıcıyı o ekrandan istemeden çıkarıyorlardı.
+        guard pane == .repo else { return .ignored }
         if let n = Int(press.characters), (1...9).contains(n) { selectIndex(n - 1); return .handled }
         switch press.key {
         case .tab where press.modifiers.contains(.shift): cycle(-1); return .handled
