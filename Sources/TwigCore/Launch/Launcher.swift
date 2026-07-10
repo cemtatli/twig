@@ -71,6 +71,11 @@ public struct Launcher {
         try open([path])
     }
 
+    /// URL'i varsayılan tarayıcıda aç (dev server için http://localhost:PORT).
+    public func openURL(_ url: String) throws {
+        try open([url])
+    }
+
     static func shellQuote(_ s: String) -> String {
         "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }

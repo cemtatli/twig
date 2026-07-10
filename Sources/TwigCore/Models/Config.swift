@@ -29,13 +29,15 @@ public struct RepoSettings: Codable, Equatable {
     public var setupCommands: [String]?
     /// "yarn" / "npm" — runs install on create and dev in a terminal after.
     public var packageManager: String?
+    /// Dev server portu — çalışıyor tespiti + tarayıcıda aç/durdur için. nil → pasif.
+    public var devPort: Int?
 
     public init(type: String? = nil, worktreePath: String? = nil, defaultBase: String? = nil,
                 envRules: [EnvRule]? = nil, setupCommands: [String]? = nil,
-                packageManager: String? = nil) {
+                packageManager: String? = nil, devPort: Int? = nil) {
         self.type = type; self.worktreePath = worktreePath; self.defaultBase = defaultBase
         self.envRules = envRules; self.setupCommands = setupCommands
-        self.packageManager = packageManager
+        self.packageManager = packageManager; self.devPort = devPort
     }
 }
 

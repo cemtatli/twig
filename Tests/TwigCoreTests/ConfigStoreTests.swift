@@ -94,7 +94,7 @@ final class ConfigStoreTests: XCTestCase {
         let settings = RepoSettings(
             type: "react", defaultBase: "main",
             envRules: [EnvRule(file: ".env", key: "API_URL", value: "http://x")],
-            setupCommands: ["yarn build"], packageManager: "yarn")
+            setupCommands: ["yarn build"], packageManager: "yarn", devPort: 5173)
         let data = try JSONEncoder().encode(settings)
         let decoded = try JSONDecoder().decode(RepoSettings.self, from: data)
         XCTAssertEqual(decoded, settings)

@@ -28,12 +28,15 @@ public struct Worktree: Equatable, Identifiable, Hashable {
     public var sync: SyncStatus
     /// The repo's primary worktree (branch == base). Never merged-badged or deletable.
     public var isPrimary: Bool
+    /// Dev server (reponun devPort'u) bu worktree'de çalışıyor mu.
+    public var devRunning: Bool
     public var id: String { path }
 
     public init(path: String, branch: String, isDirty: Bool = false,
-                sync: SyncStatus = .unknown, isPrimary: Bool = false) {
+                sync: SyncStatus = .unknown, isPrimary: Bool = false,
+                devRunning: Bool = false) {
         self.path = path; self.branch = branch; self.isDirty = isDirty
-        self.sync = sync; self.isPrimary = isPrimary
+        self.sync = sync; self.isPrimary = isPrimary; self.devRunning = devRunning
     }
 
     /// Merged into base, no uncommitted work, and not the base worktree — the
