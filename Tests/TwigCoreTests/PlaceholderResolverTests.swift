@@ -32,4 +32,21 @@ final class PlaceholderResolverTests: XCTestCase {
         let r = PlaceholderResolver(values: [:])
         XCTAssertEqual(try r.resolve("plain"), "plain")
     }
+
+    func testWorktreeTokensAreKnownSet() {
+        XCTAssertEqual(PlaceholderResolver.worktreeTokens,
+                       ["group", "repo", "type", "taskName", "branch"])
+    }
+
+    func testUnknownWorktreeTokenReturnsOffender() {
+        XCTAssertEqual(PlaceholderResolver.unknownWorktreeToken(in: "{group}/{bogus}"), "bogus")
+    }
+
+    func testValidWorktreeTemplateReturnsNil() {
+        XCTAssertNil(PlaceholderResolver.unknownWorktreeToken(in: "{group}/task/{type}-{taskName}"))
+    }
+
+    func testPlainWorktreeTemplateReturnsNil() {
+        XCTAssertNil(PlaceholderResolver.unknownWorktreeToken(in: "worktrees/x"))
+    }
 }

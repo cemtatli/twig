@@ -5,8 +5,8 @@ import TwigCore
 /// paket yöneticisi. Boş alanlar defaults'a düşer. "Bitti"de + kapanışta yazar.
 struct RepoConfigSheet: View {
     @EnvironmentObject var state: AppState
-    @Environment(\.dismiss) private var dismiss
     let repo: Repo
+    var onClose: () -> Void = {}
 
     @State private var type: String = ""
     @State private var base: String = ""
@@ -25,8 +25,11 @@ struct RepoConfigSheet: View {
                           placeholder: derivedType)
                     field(state.t(.cfgBase), text: $base,
                           placeholder: state.config.defaults.defaultBase)
-                    field(state.t(.cfgWorktreePath), text: $worktreePath,
-                          placeholder: state.config.defaults.worktreePath)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Theme.sectionLabel(state.t(.cfgWorktreePath))
+                        WorktreePathField(text: $worktreePath,
+                                          placeholder: state.config.defaults.worktreePath)
+                    }
 
                     packageManagerPicker
 
@@ -38,10 +41,7 @@ struct RepoConfigSheet: View {
                 .padding(.horizontal, 20).padding(.vertical, 18)
             }
         }
-        .frame(width: 460, height: 560)
-        .background(Theme.canvas)
-        .preferredColorScheme(.dark)
-        .tint(Theme.accent)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear(perform: load)
         .onDisappear(perform: persist)
     }
@@ -50,19 +50,20 @@ struct RepoConfigSheet: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            IconTile(systemName: "gearshape.fill", color: Color(white: 0.45), side: 28)
+            SidebarToggle()
+            IconTile(systemName: "gearshape.fill", color: Color(white: 0.45), side: 30)
             Text("\(repo.name) · \(state.t(.repoConfigTitle))")
                 .font(.system(size: 15, weight: .bold))
                 .lineLimit(1).truncationMode(.middle)
             Spacer()
-            Button(state.t(.cfgDone)) { persist(); dismiss() }
+            Button(state.t(.cfgDone)) { persist(); onClose() }
                 .buttonStyle(.plain)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
                 .padding(.horizontal, 14).padding(.vertical, 6)
                 .background(Theme.accent, in: Capsule())
         }
-        .padding(.horizontal, 20).padding(.vertical, 14)
+        .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 12)
     }
 
     private var derivedType: String {

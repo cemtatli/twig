@@ -131,9 +131,8 @@ struct SettingsView: View {
                     card {
                         VStack(alignment: .leading, spacing: 10) {
                             Theme.sectionLabel(state.t(.cfgWorktreePath))
-                            DarkTextField(placeholder: "{group}/task/{type}-{taskName}",
-                                          text: defaultsBinding(\.worktreePath),
-                                          onSubmit: { state.saveConfig() })
+                            WorktreePathField(text: defaultsBinding(\.worktreePath),
+                                              onCommit: { state.saveConfig() })
                             Theme.sectionLabel(state.t(.cfgBase))
                             DarkTextField(placeholder: "main", text: defaultsBinding(\.defaultBase),
                                           onSubmit: { state.saveConfig() })

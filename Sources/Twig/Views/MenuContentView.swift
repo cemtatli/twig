@@ -6,12 +6,11 @@ struct MenuContentView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    enum Pane: Equatable { case repo, settings, shortcuts, newWorktree }
+    enum Pane: Equatable { case repo, settings, shortcuts, newWorktree, repoConfig }
     @State private var pane: Pane = .repo
     @State private var selectedRepoPath: String?
     @State private var confirmingRemovalPath: String?
     @State private var showCleanMergedConfirm = false
-    @State private var showConfigSheet = false
     @State private var hoveredPath: String?
     @State private var hoveredRepoPath: String?
     @FocusState private var navFocused: Bool
@@ -293,6 +292,9 @@ struct MenuContentView: View {
         case .newWorktree:
             if let repo = selectedRepo { NewWorktreeForm(repo: repo, onClose: { withAnimation(selectAnim) { pane = .repo } }) }
             else { emptyState }
+        case .repoConfig:
+            if let repo = selectedRepo { RepoConfigSheet(repo: repo, onClose: { withAnimation(selectAnim) { pane = .repo } }) }
+            else { emptyState }
         case .repo:
             if let repo = selectedRepo { repoDetail(repo) } else { emptyState }
         }
@@ -313,8 +315,8 @@ struct MenuContentView: View {
                     .font(.system(size: 17, weight: .bold))
                     .lineLimit(1).truncationMode(.middle)
                 Spacer()
-                // Repo ayarları (env/setup/tip/base/path/PM) sheet'i.
-                Button { showConfigSheet = true } label: {
+                // Repo ayarları (env/setup/tip/base/path/PM) — detail pane.
+                Button { withAnimation(selectAnim) { pane = .repoConfig } } label: {
                     Image(systemName: "gearshape")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.primary)
@@ -376,9 +378,6 @@ struct MenuContentView: View {
                     state.cleanMergedWorktrees(repo: repo)
                 }
                 Button(state.t(.cancel), role: .cancel) {}
-            }
-            .sheet(isPresented: $showConfigSheet) {
-                RepoConfigSheet(repo: repo).environmentObject(state)
             }
 
             Rectangle().fill(Theme.hairline).frame(height: 1)
@@ -550,24 +549,19 @@ struct MenuContentView: View {
     private func syncBadge(_ status: SyncStatus) -> some View {
         switch status {
         case .merged:
-            badgePill(state.t(.syncMerged), color: Theme.dotClean)
+            TagBadge(text: state.t(.syncMerged), systemImage: "checkmark", tint: Theme.dotClean)
         case .ahead(let n):
-            badgePill("↑\(n)", color: .secondary)
+            TagBadge(text: "\(n)", systemImage: "arrow.up", tint: Theme.dotClean)   // yeşil: önde
         case .behind(let m):
-            badgePill("↓\(m)", color: .secondary)
+            TagBadge(text: "\(m)", systemImage: "arrow.down", tint: Theme.danger)   // kırmızı: geride
         case .diverged(let a, let b):
-            badgePill("↑\(a) ↓\(b)", color: .secondary)
+            HStack(spacing: 3) {
+                TagBadge(text: "\(a)", systemImage: "arrow.up", tint: Theme.dotClean)
+                TagBadge(text: "\(b)", systemImage: "arrow.down", tint: Theme.danger)
+            }
         case .even, .unknown:
             EmptyView()
         }
-    }
-
-    private func badgePill(_ text: String, color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(color)
-            .padding(.horizontal, 6).padding(.vertical, 2)
-            .background(color.opacity(0.14), in: Capsule())
     }
 
     // MARK: Empty state

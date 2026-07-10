@@ -168,6 +168,37 @@ struct PillBadge: View {
     }
 }
 
+// MARK: - TagBadge
+
+/// Border'lı (kontur) mini kapsül rozet: opsiyonel ikon + kısa metin, tint
+/// rengiyle çerçeve/metin. Git durumu (↑ahead/↓behind/merged) gibi yerlerde
+/// kullanılır. `onTap` verilirse tıklanabilir (insert-chip vb.).
+struct TagBadge: View {
+    let text: String
+    var systemImage: String? = nil
+    var tint: Color = .secondary
+    var onTap: (() -> Void)? = nil
+
+    var body: some View {
+        let content = HStack(spacing: 3) {
+            if let systemImage {
+                Image(systemName: systemImage).font(.system(size: 9, weight: .bold))
+            }
+            Text(text).font(.system(size: 10, weight: .semibold))
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 7).padding(.vertical, 2)
+        .overlay(Capsule().strokeBorder(tint.opacity(0.5), lineWidth: 1))
+        .contentShape(Capsule())
+
+        if let onTap {
+            Button(action: onTap) { content }.buttonStyle(.plain)
+        } else {
+            content
+        }
+    }
+}
+
 // MARK: - BorderedPillButton
 
 /// İkincil kapsül buton — Yenile/New ile aynı krom ailesi: nötr koyu dolgu,
