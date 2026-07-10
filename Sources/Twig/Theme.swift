@@ -85,7 +85,7 @@ struct SidebarToggle: View {
 /// just the universe to probe — what's shown is filtered to this machine.
 enum InstalledApps {
     static let terminals = ["Terminal", "iTerm", "Warp", "Ghostty", "kitty",
-                            "Alacritty", "WezTerm", "Hyper", "Tabby", "cmux"]
+                            "Alacritty", "WezTerm", "Hyper", "Tabby"]
     static let editors = ["Cursor", "Visual Studio Code", "VSCodium", "Zed",
                           "Sublime Text", "Nova", "Xcode", "Fleet", "Windsurf"]
 

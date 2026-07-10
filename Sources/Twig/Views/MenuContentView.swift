@@ -624,7 +624,7 @@ private struct OptionalShortcut: ViewModifier {
 }
 
 extension String {
-    /// `/Users/example/foo` → `~/foo` for compact display.
+    /// `/Users/you/foo` → `~/foo` for compact display.
     var abbreviatingHome: String {
         (self as NSString).abbreviatingWithTildeInPath
     }

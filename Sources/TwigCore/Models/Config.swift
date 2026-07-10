@@ -124,7 +124,7 @@ public struct Config: Codable, Equatable {
         scanDepth: 3,
         manualRepos: [],
         terminalApp: "Terminal",
-        editorApp: "Cursor",
+        editorApp: "Visual Studio Code",
         terminalStartupCommand: "",
         language: "en",
         repos: [:],

@@ -51,7 +51,7 @@ public struct Launcher {
             return
         }
         // .zshrc'yi source et: kullanıcının alias/fonksiyon/PATH tanımları
-        // (ör. `ccd`) yüklensin — non-interactive shell aksi halde rc okumaz,
+        // yüklensin — non-interactive shell aksi halde rc okumaz, özel alias'lar
         // "command not found" verir. Source çalışıp alias'ı tanımladıktan sonra
         // sonraki satır parse edildiği için alias genişletmesi de çalışır.
         let script = """
