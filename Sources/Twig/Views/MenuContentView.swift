@@ -12,6 +12,7 @@ struct MenuContentView: View {
     @State private var confirmingRemovalPath: String?
     @State private var showCleanMergedConfirm = false
     @State private var hoveredSection: String?
+    @State private var appeared = false
     @State private var hoveredPath: String?
     @State private var hoveredRepoPath: String?
     @FocusState private var navFocused: Bool
@@ -41,13 +42,21 @@ struct MenuContentView: View {
         .background(Theme.canvas)
         .overlay { if !state.config.onboardingCompleted { OnboardingView() } }
         .overlay(ToastOverlay())
+        // Menubar popover açılışı: üstten hafif düşerek + solarak gelir.
+        .scaleEffect(reduceMotion ? 1 : (appeared ? 1 : 0.96), anchor: .top)
+        .opacity(reduceMotion ? 1 : (appeared ? 1 : 0))
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
         .focusable()
         .focused($navFocused)
         .focusEffectDisabled()
         .onKeyPress(action: handleKey)
-        .onAppear { state.refresh(); navFocused = true }
+        .onAppear {
+            state.refresh(); navFocused = true
+            appeared = false
+            withAnimation(.snappy(duration: 0.24)) { appeared = true }
+        }
+        .onDisappear { appeared = false }
         .onChange(of: pane) { _, new in if new != .newWorktree { navFocused = true } }
         .onChange(of: state.repos.count) { _, _ in
             if selectedRepoPath == nil { selectedRepoPath = state.repos.first?.path }
