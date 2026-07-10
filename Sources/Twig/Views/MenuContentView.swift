@@ -10,6 +10,7 @@ struct MenuContentView: View {
     @State private var pane: Pane = .repo
     @State private var selectedRepoPath: String?
     @State private var confirmingRemovalPath: String?
+    @State private var showCleanMergedConfirm = false
     @State private var hoveredPath: String?
     @State private var hoveredRepoPath: String?
     @FocusState private var navFocused: Bool
@@ -114,11 +115,18 @@ struct MenuContentView: View {
                         .padding(.horizontal, 14).padding(.top, 14).padding(.bottom, 6)
                     ScrollView {
                         VStack(alignment: .leading, spacing: 2) {
+                            // Favoriler — en üstte sabit. Repolar grubunda da kalır.
+                            let favorites = state.favoriteRepos
+                            if !favorites.isEmpty {
+                                sectionHeader(state.t(.favoritesSection))
+                                ForEach(favorites) { repo in
+                                    repoRowView(repo: repo, globalIndex: repoIndex(repo),
+                                                group: repo.group, posInGroup: 0,
+                                                groupCount: 1, inFavorites: true)
+                                }
+                            }
                             ForEach(groupedRepos, id: \.group) { section in
-                                Text(section.group)
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(.secondary)
-                                    .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+                                sectionHeader(section.group)
                                 ForEach(Array(section.repos.enumerated()), id: \.element.repo.id) { pos, entry in
                                     repoRowView(repo: entry.repo, globalIndex: entry.index,
                                                 group: section.group, posInGroup: pos,
@@ -181,15 +189,31 @@ struct MenuContentView: View {
     /// One repo row. Sıralama yalnız context menüden (Yukarı/Aşağı Taşı) —
     /// grip'li drag-to-reorder popover içinde güvenilir çalışmadığı için
     /// kaldırıldı.
+    /// Section başlığı — grup ve Favoriler için ortak stil.
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+    }
+
     private func repoRowView(repo: Repo, globalIndex: Int, group: String,
-                             posInGroup: Int, groupCount: Int) -> some View {
+                             posInGroup: Int, groupCount: Int,
+                             inFavorites: Bool = false) -> some View {
         let isSelected = pane == .repo && selectedRepo?.path == repo.path
         let isHovered = hoveredRepoPath == repo.path
+        let favorite = state.isFavorite(repo)
         return HStack(spacing: 8) {
             IconTile(systemName: "folder.fill",
                      color: TilePalette.color(at: globalIndex), side: 26)
             Text(repo.name).font(.system(size: 13, weight: .medium))
             Spacer(minLength: 0)
+            if favorite && inFavorites {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Theme.accent)
+                    .opacity(isHovered ? 1 : 0.55)
+            }
         }
         .lineLimit(1)
         .padding(.horizontal, 10)
@@ -206,19 +230,27 @@ struct MenuContentView: View {
         .onHover { hovering in hoveredRepoPath = hovering ? repo.path : (isHovered ? nil : hoveredRepoPath) }
         .help("\(group)/\(repo.name)  ·  \(globalIndex + 1)")
         .contextMenu {
-            Button(state.t(.moveUp)) {
-                withAnimation(selectAnim) {
-                    state.moveRepo(path: repo.path, inGroup: group, toGroupIndex: posInGroup - 1)
-                }
+            Button(favorite ? state.t(.removeFavorite) : state.t(.addFavorite),
+                   systemImage: favorite ? "star.slash" : "star") {
+                state.toggleFavorite(repo)
             }
-            .disabled(posInGroup == 0)
-            Button(state.t(.moveDown)) {
-                withAnimation(selectAnim) {
-                    state.moveRepo(path: repo.path, inGroup: group, toGroupIndex: posInGroup + 1)
+            if !inFavorites {
+                Divider()
+                Button(state.t(.moveUp)) {
+                    withAnimation(selectAnim) {
+                        state.moveRepo(path: repo.path, inGroup: group, toGroupIndex: posInGroup - 1)
+                    }
                 }
+                .disabled(posInGroup == 0)
+                Button(state.t(.moveDown)) {
+                    withAnimation(selectAnim) {
+                        state.moveRepo(path: repo.path, inGroup: group, toGroupIndex: posInGroup + 1)
+                    }
+                }
+                .disabled(posInGroup == groupCount - 1)
             }
-            .disabled(posInGroup == groupCount - 1)
             Divider()
+            Button(state.t(.pruneStale), systemImage: "sparkles") { state.pruneStale(repo: repo) }
             Button(state.t(.finder)) { state.openFinder(repo.path) }
         }
     }
@@ -276,6 +308,19 @@ struct MenuContentView: View {
                 .disabled(state.isRefreshing)
                 .help(state.t(.refresh)).accessibilityLabel(state.t(.refresh))
                 .keyboardShortcut("r")
+                // Merged temizle — yalnız silinebilir (merged+temiz) worktree varsa.
+                let cleanCount = state.mergedCleanCount(for: repo)
+                if cleanCount > 0 {
+                    Button { showCleanMergedConfirm = true } label: {
+                        Label("\(state.t(.cleanMerged)) (\(cleanCount))", systemImage: "trash.slash")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(Color.white.opacity(0.08), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .help(state.t(.cleanMerged))
+                }
                 Button { withAnimation(selectAnim) { pane = .newWorktree } } label: {
                     Label(state.t(.new), systemImage: "plus")
                         .font(.system(size: 13, weight: .semibold))
@@ -288,6 +333,13 @@ struct MenuContentView: View {
                 .keyboardShortcut("n")
             }
             .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
+            .confirmationDialog(cleanMergedTitle(repo),
+                                isPresented: $showCleanMergedConfirm, titleVisibility: .visible) {
+                Button("\(state.t(.cleanMerged)) (\(state.mergedCleanCount(for: repo)))", role: .destructive) {
+                    state.cleanMergedWorktrees(repo: repo)
+                }
+                Button(state.t(.cancel), role: .cancel) {}
+            }
 
             if let err = state.lastError {
                 Label(err, systemImage: "exclamationmark.triangle")
@@ -356,15 +408,26 @@ struct MenuContentView: View {
                 Text(folderName(wt.path)).font(Theme.mono(10))
                     .foregroundStyle(.tertiary).lineLimit(1).truncationMode(.middle)
             }
+            syncBadge(wt.sync)
             Spacer(minLength: 8)
 
             if confirmingRemovalPath == wt.path {
-                Text(state.t(.deletePrompt)).font(.caption).foregroundStyle(.secondary)
-                pillButton(state.t(.worktreeWord)) {
-                    state.removeWorktree(repo: repo, worktree: wt, deleteBranch: false); confirmingRemovalPath = nil
-                }
-                pillButton(state.t(.branchPlus), danger: true) {
-                    state.removeWorktree(repo: repo, worktree: wt, deleteBranch: true); confirmingRemovalPath = nil
+                if wt.isDirty {
+                    // Dirty worktree: normal remove patlar → uyarı + zorla sil.
+                    Label(state.t(.dirtyDeleteWarning), systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(Theme.danger).labelStyle(.titleAndIcon)
+                    pillButton(state.t(.forceDelete), danger: true) {
+                        state.removeWorktree(repo: repo, worktree: wt, deleteBranch: true, force: true)
+                        confirmingRemovalPath = nil
+                    }
+                } else {
+                    Text(state.t(.deletePrompt)).font(.caption).foregroundStyle(.secondary)
+                    pillButton(state.t(.worktreeWord)) {
+                        state.removeWorktree(repo: repo, worktree: wt, deleteBranch: false); confirmingRemovalPath = nil
+                    }
+                    pillButton(state.t(.branchPlus), danger: true) {
+                        state.removeWorktree(repo: repo, worktree: wt, deleteBranch: true); confirmingRemovalPath = nil
+                    }
                 }
                 rowAction("xmark", help: state.t(.cancel)) { confirmingRemovalPath = nil }
             } else {
@@ -435,6 +498,41 @@ struct MenuContentView: View {
 
     private func folderName(_ path: String) -> String {
         (path as NSString).lastPathComponent
+    }
+
+    /// Merged temizle onay başlığı — silinecek sayı + dirty atlanan not.
+    private func cleanMergedTitle(_ repo: Repo) -> String {
+        let clean = state.mergedCleanCount(for: repo)
+        let dirty = state.mergedDirtyCount(for: repo)
+        var s = "\(clean) merged worktree + branch silinecek."
+        if dirty > 0 { s += " \(dirty) tanesi kaydedilmemiş değişiklik nedeniyle atlanacak." }
+        return s
+    }
+
+    /// Base'e göre senkron rozeti. merged → yeşil; ahead/behind → gri sayaç.
+    /// even/unknown → rozet yok.
+    @ViewBuilder
+    private func syncBadge(_ status: SyncStatus) -> some View {
+        switch status {
+        case .merged:
+            badgePill(state.t(.syncMerged), color: Theme.dotClean)
+        case .ahead(let n):
+            badgePill("↑\(n)", color: .secondary)
+        case .behind(let m):
+            badgePill("↓\(m)", color: .secondary)
+        case .diverged(let a, let b):
+            badgePill("↑\(a) ↓\(b)", color: .secondary)
+        case .even, .unknown:
+            EmptyView()
+        }
+    }
+
+    private func badgePill(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 6).padding(.vertical, 2)
+            .background(color.opacity(0.14), in: Capsule())
     }
 
     // MARK: Empty state

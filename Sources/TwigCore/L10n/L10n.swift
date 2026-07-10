@@ -26,6 +26,10 @@ public enum L10nKey: String, CaseIterable {
     case noReposFound, startupCommandTitle, startupCommandCaption, startupPlaceholder
     case editConfigHint, pmNone, remove, languageTitle, languageCaption
     case openConfigButton
+    // Favoriler + worktree temizlik
+    case favoritesSection, addFavorite, removeFavorite
+    case forceDelete, dirtyDeleteWarning, cleanMerged, pruneStale
+    case syncMerged
     // Add-source panel
     case addPanelPrompt, addPanelMessage
     // Shortcuts (Settings bölümü)
@@ -80,6 +84,11 @@ public enum L10n {
             .startupPlaceholder: "e.g. npm run dev",
             .editConfigHint: "Edit config.json by hand for env/command rules:",
             .openConfigButton: "Open config.json",
+            .favoritesSection: "Favorites", .addFavorite: "Add to favorites",
+            .removeFavorite: "Remove from favorites",
+            .forceDelete: "Force delete", .dirtyDeleteWarning: "Uncommitted changes",
+            .cleanMerged: "Clean merged", .pruneStale: "Prune stale entries",
+            .syncMerged: "merged",
             .pmNone: "None", .remove: "Remove",
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
@@ -124,6 +133,11 @@ public enum L10n {
             .startupPlaceholder: "ör. npm run dev",
             .editConfigHint: "Env/komut kuralları için config.json\u{2019}ı elle düzenle:",
             .openConfigButton: "config.json\u{2019}ı aç",
+            .favoritesSection: "Favoriler", .addFavorite: "Favlara ekle",
+            .removeFavorite: "Favlardan çıkar",
+            .forceDelete: "Zorla sil", .dirtyDeleteWarning: "Kaydedilmemiş değişiklik",
+            .cleanMerged: "Merged temizle", .pruneStale: "Stale kayıtları temizle",
+            .syncMerged: "merged",
             .pmNone: "Yok", .remove: "Kaldır",
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",

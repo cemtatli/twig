@@ -44,9 +44,13 @@ final class AppState: ObservableObject {
                 // Exclude the base repo's own checkout and any worktree whose
                 // directory no longer exists on disk.
                 let filtered = all.filter { $0.path != repo.path && fm.fileExists(atPath: $0.path) }
+                let base = config.repos["\(repo.group)/\(repo.name)"]?.defaultBase ?? config.defaults.defaultBase
                 map[repo.path] = filtered.map { wt in
                     var wt = wt
                     wt.isDirty = (try? git.isDirty(worktreePath: wt.path)) ?? false
+                    wt.isPrimary = (wt.branch == base)
+                    wt.sync = wt.isPrimary ? .unknown
+                        : git.mergeStatus(repoPath: repo.path, branch: wt.branch, base: base)
                     return wt
                 }
             }
@@ -166,12 +170,61 @@ final class AppState: ObservableObject {
         }
     }
 
-    func removeWorktree(repo: Repo, worktree: Worktree, deleteBranch: Bool) {
+    func removeWorktree(repo: Repo, worktree: Worktree, deleteBranch: Bool, force: Bool = false) {
         do {
-            try git.removeWorktree(repoPath: repo.path, worktreePath: worktree.path)
+            try git.removeWorktree(repoPath: repo.path, worktreePath: worktree.path, force: force)
             if deleteBranch { try? git.deleteBranch(repoPath: repo.path, branch: worktree.branch) }
             refresh()
         } catch { lastError = "\(error)" }
+    }
+
+    /// Worktree'ler ki merge edilmiş + temiz + primary değil — hepsini
+    /// worktree+branch olarak sil. Dirty merged olanlar atlanır (kayıp riski).
+    func cleanMergedWorktrees(repo: Repo) {
+        let safe = (worktreesByRepo[repo.path] ?? []).filter { $0.isSafeToClean }
+        for wt in safe {
+            try? git.removeWorktree(repoPath: repo.path, worktreePath: wt.path)  // temiz → force yok
+            try? git.deleteBranch(repoPath: repo.path, branch: wt.branch)
+        }
+        refresh()
+    }
+
+    /// Repo'da merge edilmiş+temiz (silinebilir) worktree sayısı — buton aktifliği için.
+    func mergedCleanCount(for repo: Repo) -> Int {
+        (worktreesByRepo[repo.path] ?? []).filter { $0.isSafeToClean }.count
+    }
+
+    /// Merge edilmiş ama dirty olduğu için atlanacak worktree sayısı — onay notu için.
+    func mergedDirtyCount(for repo: Repo) -> Int {
+        (worktreesByRepo[repo.path] ?? []).filter { $0.sync == .merged && $0.isDirty && !$0.isPrimary }.count
+    }
+
+    /// Stale (klasörü silinmiş) worktree kayıtlarını açıkça temizle.
+    func pruneStale(repo: Repo) {
+        try? git.prune(repoPath: repo.path)
+        refresh()
+    }
+
+    // MARK: — Favoriler
+
+    func isFavorite(_ repo: Repo) -> Bool {
+        config.favoriteRepos.contains("\(repo.group)/\(repo.name)")
+    }
+
+    /// Favori ekle/çıkar. saveConfig yerine yalnız kaydet + @Published config
+    /// mutasyonu ile sidebar'ı tazele (full refresh flicker'ı olmasın).
+    func toggleFavorite(_ repo: Repo) {
+        let key = "\(repo.group)/\(repo.name)"
+        if let i = config.favoriteRepos.firstIndex(of: key) { config.favoriteRepos.remove(at: i) }
+        else { config.favoriteRepos.append(key) }
+        try? store.save(config)
+    }
+
+    /// Favori repolar, config sırasıyla; artık taranmayan anahtarlar atlanır.
+    var favoriteRepos: [Repo] {
+        config.favoriteRepos.compactMap { key in
+            repos.first { "\($0.group)/\($0.name)" == key }
+        }
     }
 
     /// Open a Finder panel to add repos. A chosen folder with a `.git`
