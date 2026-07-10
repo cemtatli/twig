@@ -66,21 +66,47 @@ final class AppState: ObservableObject {
     /// isPrimary) lazily hesapla — tüm repolar için her refresh'te git
     /// çalıştırmamak için. Repo seçilince/refresh'te çağrılır.
     func loadStatus(for repo: Repo) {
-        let base = config.repos["\(repo.group)/\(repo.name)"]?.defaultBase ?? config.defaults.defaultBase
+        let settings = config.repos["\(repo.group)/\(repo.name)"]
+        let base = settings?.defaultBase ?? config.defaults.defaultBase
+        let devPort = settings?.devPort
         let path = repo.path
         Task.detached { [weak self] in
             guard let current = await self?.worktreesByRepo[path], !current.isEmpty else { return }
             let git = GitService(runner: SystemProcessRunner())
+            let dev = DevServer(runner: SystemProcessRunner())
             let enriched = current.map { wt -> Worktree in
                 var wt = wt
                 wt.isDirty = (try? git.isDirty(worktreePath: wt.path)) ?? false
                 wt.isPrimary = (wt.branch == base)
                 wt.sync = wt.isPrimary ? .unknown
                     : git.mergeStatus(repoPath: path, branch: wt.branch, base: base)
+                wt.devRunning = devPort.map { dev.isRunning(port: $0, worktreePath: wt.path) } ?? false
                 return wt
             }
             await MainActor.run { self?.worktreesByRepo[path] = enriched }
         }
+    }
+
+    // MARK: — Dev server
+
+    private var devServer: DevServer { DevServer(runner: runner) }
+
+    func devPort(for repo: Repo) -> Int? {
+        config.repos["\(repo.group)/\(repo.name)"]?.devPort
+    }
+
+    func openDevServer(repo: Repo, worktree: Worktree) {
+        guard let port = devPort(for: repo) else { return }
+        try? launcher.openURL("http://localhost:\(port)")
+    }
+
+    func stopDevServer(repo: Repo, worktree: Worktree) {
+        guard let port = devPort(for: repo) else { return }
+        do {
+            try devServer.stop(port: port)
+            toast("\(worktree.branch) · dev \(t(.toastDevStopped))", kind: .info)
+            loadStatus(for: repo)
+        } catch { toast(friendlyMessage(error), kind: .error) }
     }
 
     // MARK: — Toast

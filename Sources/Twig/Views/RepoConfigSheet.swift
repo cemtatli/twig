@@ -12,6 +12,7 @@ struct RepoConfigSheet: View {
     @State private var base: String = ""
     @State private var worktreePath: String = ""
     @State private var pm: String?               // nil / "npm" / "yarn"
+    @State private var devPort: String = ""
     @State private var envRules: [EnvRule] = []
     @State private var setupCommands: [String] = []
 
@@ -32,6 +33,8 @@ struct RepoConfigSheet: View {
                     }
 
                     packageManagerPicker
+
+                    field(state.t(.cfgDevPort), text: $devPort, placeholder: "3000")
 
                     envSection
                     setupSection
@@ -163,6 +166,7 @@ struct RepoConfigSheet: View {
         base = s.defaultBase ?? ""
         worktreePath = s.worktreePath ?? ""
         pm = s.packageManager
+        devPort = s.devPort.map(String.init) ?? ""
         envRules = s.envRules ?? []
         setupCommands = s.setupCommands ?? []
     }
@@ -181,7 +185,8 @@ struct RepoConfigSheet: View {
             defaultBase: nilIfEmpty(base),
             envRules: cleanEnv.isEmpty ? nil : cleanEnv,
             setupCommands: cleanSetup.isEmpty ? nil : cleanSetup,
-            packageManager: pm)
+            packageManager: pm,
+            devPort: Int(devPort.trimmingCharacters(in: .whitespaces)))
         state.saveRepoSettings(settings, for: repo)
     }
 }

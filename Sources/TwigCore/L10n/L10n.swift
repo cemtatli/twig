@@ -37,6 +37,7 @@ public enum L10nKey: String, CaseIterable {
     case repoConfigTitle, cfgType, cfgBase, cfgWorktreePath, cfgEnvRules
     case cfgSetupCommands, cfgAddRule, cfgAddCommand, cfgFile, cfgKey, cfgValue
     case cfgDone, defaultsTitle, repoConfigHelp, cfgInsert, cfgUnknownToken, cfgCustom
+    case cfgDevPort, devOpenBrowser, devStop, devRunning, toastDevStopped
     // Add-source panel
     case addPanelPrompt, addPanelMessage
     // Shortcuts (Settings bölümü)
@@ -106,6 +107,8 @@ public enum L10n {
             .cfgDone: "Done", .defaultsTitle: "Defaults (all repos)",
             .repoConfigHelp: "Empty fields fall back to defaults.",
             .cfgInsert: "Insert:", .cfgUnknownToken: "Unknown token", .cfgCustom: "Custom\u{2026}",
+            .cfgDevPort: "Dev port", .devOpenBrowser: "Open in browser", .devStop: "Stop dev server",
+            .devRunning: "running", .toastDevStopped: "stopped",
             .pmNone: "None", .remove: "Remove",
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
@@ -165,6 +168,8 @@ public enum L10n {
             .cfgDone: "Bitti", .defaultsTitle: "Defaults (tüm repolar)",
             .repoConfigHelp: "Boş alanlar defaults'a düşer.",
             .cfgInsert: "Ekle:", .cfgUnknownToken: "Bilinmeyen token", .cfgCustom: "Özel\u{2026}",
+            .cfgDevPort: "Dev port", .devOpenBrowser: "Tarayıcıda aç", .devStop: "Dev server'ı durdur",
+            .devRunning: "çalışıyor", .toastDevStopped: "durduruldu",
             .pmNone: "Yok", .remove: "Kaldır",
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",

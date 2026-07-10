@@ -450,6 +450,10 @@ struct MenuContentView: View {
                     .foregroundStyle(.tertiary).lineLimit(1).truncationMode(.middle)
             }
             syncBadge(wt.sync)
+            if state.devPort(for: repo) != nil, wt.devRunning {
+                TagBadge(text: state.t(.devRunning), systemImage: "circle.fill",
+                         tint: Theme.dotClean, filled: true)
+            }
             Spacer(minLength: 8)
 
             if confirmingRemovalPath == wt.path {
@@ -473,6 +477,16 @@ struct MenuContentView: View {
                 rowAction("xmark", help: state.t(.cancel)) { confirmingRemovalPath = nil }
             } else {
                 HStack(spacing: 5) {
+                    if state.devPort(for: repo) != nil {
+                        rowAction("globe", help: state.t(.devOpenBrowser)) {
+                            state.openDevServer(repo: repo, worktree: wt)
+                        }
+                        if wt.devRunning {
+                            rowAction("stop.circle", help: state.t(.devStop), danger: true) {
+                                state.stopDevServer(repo: repo, worktree: wt)
+                            }
+                        }
+                    }
                     rowAction("chevron.left.forwardslash.chevron.right",
                               help: state.config.editorApp) { state.openEditor(wt.path) }
                     rowAction("terminal",
