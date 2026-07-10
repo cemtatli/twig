@@ -36,7 +36,7 @@ public enum L10nKey: String, CaseIterable {
     // Repo config sheet
     case repoConfigTitle, cfgType, cfgBase, cfgWorktreePath, cfgEnvRules
     case cfgSetupCommands, cfgAddRule, cfgAddCommand, cfgFile, cfgKey, cfgValue
-    case cfgDone, defaultsTitle, repoConfigHelp, cfgInsert, cfgUnknownToken
+    case cfgDone, defaultsTitle, repoConfigHelp, cfgInsert, cfgUnknownToken, cfgCustom
     // Add-source panel
     case addPanelPrompt, addPanelMessage
     // Shortcuts (Settings bölümü)
@@ -105,7 +105,7 @@ public enum L10n {
             .cfgAddCommand: "Add command", .cfgFile: "file", .cfgKey: "key", .cfgValue: "value",
             .cfgDone: "Done", .defaultsTitle: "Defaults (all repos)",
             .repoConfigHelp: "Empty fields fall back to defaults.",
-            .cfgInsert: "Insert:", .cfgUnknownToken: "Unknown token",
+            .cfgInsert: "Insert:", .cfgUnknownToken: "Unknown token", .cfgCustom: "Custom\u{2026}",
             .pmNone: "None", .remove: "Remove",
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
@@ -164,7 +164,7 @@ public enum L10n {
             .cfgAddCommand: "Komut ekle", .cfgFile: "dosya", .cfgKey: "anahtar", .cfgValue: "değer",
             .cfgDone: "Bitti", .defaultsTitle: "Defaults (tüm repolar)",
             .repoConfigHelp: "Boş alanlar defaults'a düşer.",
-            .cfgInsert: "Ekle:", .cfgUnknownToken: "Bilinmeyen token",
+            .cfgInsert: "Ekle:", .cfgUnknownToken: "Bilinmeyen token", .cfgCustom: "Özel\u{2026}",
             .pmNone: "Yok", .remove: "Kaldır",
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",

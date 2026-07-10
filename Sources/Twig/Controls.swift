@@ -177,6 +177,8 @@ struct TagBadge: View {
     let text: String
     var systemImage: String? = nil
     var tint: Color = .secondary
+    /// true → dolgulu (tint arka plan), false → kontur (border).
+    var filled: Bool = false
     var onTap: (() -> Void)? = nil
 
     var body: some View {
@@ -188,7 +190,10 @@ struct TagBadge: View {
         }
         .foregroundStyle(tint)
         .padding(.horizontal, 7).padding(.vertical, 2)
-        .overlay(Capsule().strokeBorder(tint.opacity(0.5), lineWidth: 1))
+        .background {
+            if filled { Capsule().fill(tint.opacity(0.16)) }
+            else { Capsule().strokeBorder(tint.opacity(0.5), lineWidth: 1) }
+        }
         .contentShape(Capsule())
 
         if let onTap {

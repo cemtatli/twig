@@ -11,6 +11,7 @@ struct MenuContentView: View {
     @State private var selectedRepoPath: String?
     @State private var confirmingRemovalPath: String?
     @State private var showCleanMergedConfirm = false
+    @State private var hoveredSection: String?
     @State private var hoveredPath: String?
     @State private var hoveredRepoPath: String?
     @FocusState private var navFocused: Bool
@@ -200,26 +201,32 @@ struct MenuContentView: View {
     /// One repo row. Sıralama yalnız context menüden (Yukarı/Aşağı Taşı) —
     /// grip'li drag-to-reorder popover içinde güvenilir çalışmadığı için
     /// kaldırıldı.
-    /// Section başlığı — tıkla katla/aç. Grup ve Favoriler için ortak stil.
+    /// Section başlığı — tıkla katla/aç. Chevron en sağda; hover'da satır
+    /// hafif arka plan alır. Grup ve Favoriler için ortak stil.
     private func sectionHeader(_ title: String, key: String) -> some View {
         let collapsed = state.isSectionCollapsed(key)
+        let hovered = hoveredSection == key
         return Button {
             withAnimation(selectAnim) { state.toggleSection(key) }
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundStyle(.tertiary)
-                    .rotationEffect(.degrees(collapsed ? 0 : 90))
                 Text(title)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(collapsed ? 0 : 90))
             }
-            .padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 4)
+            .padding(.horizontal, 10).padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(hovered ? Theme.rowHover : .clear))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .padding(.top, 6)
+        .onHover { hovering in hoveredSection = hovering ? key : (hovered ? nil : hoveredSection) }
     }
 
     private func repoRowView(repo: Repo, globalIndex: Int, group: String,
@@ -549,15 +556,15 @@ struct MenuContentView: View {
     private func syncBadge(_ status: SyncStatus) -> some View {
         switch status {
         case .merged:
-            TagBadge(text: state.t(.syncMerged), systemImage: "checkmark", tint: Theme.dotClean)
+            TagBadge(text: state.t(.syncMerged), systemImage: "checkmark", tint: Theme.dotClean, filled: true)
         case .ahead(let n):
-            TagBadge(text: "\(n)", systemImage: "arrow.up", tint: Theme.dotClean)   // yeşil: önde
+            TagBadge(text: "\(n)", systemImage: "arrow.up", tint: Theme.dotClean, filled: true)   // yeşil: önde
         case .behind(let m):
-            TagBadge(text: "\(m)", systemImage: "arrow.down", tint: Theme.danger)   // kırmızı: geride
+            TagBadge(text: "\(m)", systemImage: "arrow.down", tint: Theme.danger, filled: true)   // kırmızı: geride
         case .diverged(let a, let b):
             HStack(spacing: 3) {
-                TagBadge(text: "\(a)", systemImage: "arrow.up", tint: Theme.dotClean)
-                TagBadge(text: "\(b)", systemImage: "arrow.down", tint: Theme.danger)
+                TagBadge(text: "\(a)", systemImage: "arrow.up", tint: Theme.dotClean, filled: true)
+                TagBadge(text: "\(b)", systemImage: "arrow.down", tint: Theme.danger, filled: true)
             }
         case .even, .unknown:
             EmptyView()
