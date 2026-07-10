@@ -80,8 +80,10 @@ public struct GitService {
         return r.exitCode == 0
     }
 
-    public func removeWorktree(repoPath: String, worktreePath: String) throws {
-        try git(["-C", repoPath, "worktree", "remove", worktreePath])
+    public func removeWorktree(repoPath: String, worktreePath: String, force: Bool = false) throws {
+        var args = ["-C", repoPath, "worktree", "remove", worktreePath]
+        if force { args.append("--force") }
+        try git(args)
     }
 
     public func deleteBranch(repoPath: String, branch: String) throws {
@@ -91,5 +93,41 @@ public struct GitService {
     /// Drops registrations for worktrees whose directories no longer exist.
     public func prune(repoPath: String) throws {
         try git(["-C", repoPath, "worktree", "prune"])
+    }
+
+    /// A branch's position relative to `base`. Non-throwing: any git error or
+    /// unresolvable base yields `.unknown` so callers treat it as unsafe.
+    /// Resolves `origin/<base>` first, falls back to the local `<base>` ref.
+    public func mergeStatus(repoPath: String, branch: String, base: String) -> SyncStatus {
+        func resolves(_ ref: String) -> Bool {
+            let r = try? runner.run("git", ["-C", repoPath, "rev-parse", "--verify", "--quiet", ref], cwd: nil)
+            return r?.exitCode == 0
+        }
+        let resolvedBase: String
+        if resolves("origin/\(base)") { resolvedBase = "origin/\(base)" }
+        else if resolves(base) { resolvedBase = base }
+        else { return .unknown }
+
+        // Fully contained in base → merged (implies 0 ahead).
+        if let anc = try? runner.run("git",
+                ["-C", repoPath, "merge-base", "--is-ancestor", branch, resolvedBase], cwd: nil),
+           anc.exitCode == 0 {
+            return .merged
+        }
+
+        // "<behind>\t<ahead>" — left side is base-only commits, right is branch-only.
+        guard let rev = try? runner.run("git",
+                ["-C", repoPath, "rev-list", "--left-right", "--count", "\(resolvedBase)...\(branch)"], cwd: nil),
+              rev.exitCode == 0 else { return .unknown }
+        let parts = rev.stdout.split(whereSeparator: { $0 == "\t" || $0 == " " || $0 == "\n" })
+            .compactMap { Int($0) }
+        guard parts.count == 2 else { return .unknown }
+        let behind = parts[0], ahead = parts[1]
+        switch (ahead, behind) {
+        case (0, 0):           return .even
+        case let (a, 0):       return .ahead(a)
+        case let (0, b):       return .behind(b)
+        case let (a, b):       return .diverged(ahead: a, behind: b)
+        }
     }
 }

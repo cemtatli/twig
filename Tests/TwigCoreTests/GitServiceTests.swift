@@ -61,6 +61,18 @@ final class GitServiceTests: XCTestCase {
                        ["main", "develop", "feature"])
     }
 
+    func testRemoveWorktreeBuildsArgs() throws {
+        let fake = FakeProcessRunner()
+        try GitService(runner: fake).removeWorktree(repoPath: "/repo", worktreePath: "/wt/x")
+        XCTAssertEqual(fake.calls.first?.args, ["-C", "/repo", "worktree", "remove", "/wt/x"])
+    }
+
+    func testRemoveWorktreeForceAppendsFlag() throws {
+        let fake = FakeProcessRunner()
+        try GitService(runner: fake).removeWorktree(repoPath: "/repo", worktreePath: "/wt/x", force: true)
+        XCTAssertEqual(fake.calls.first?.args, ["-C", "/repo", "worktree", "remove", "/wt/x", "--force"])
+    }
+
     func testPruneBuildsArgs() throws {
         let fake = FakeProcessRunner()
         try GitService(runner: fake).prune(repoPath: "/repo")
@@ -98,5 +110,110 @@ final class GitServiceTests: XCTestCase {
 
     func testWorktreeIsDirtyDefaultsFalse() {
         XCTAssertFalse(Worktree(path: "/wt/x", branch: "main").isDirty)
+    }
+
+    func testWorktreeSyncDefaultsUnknownAndNotPrimary() {
+        let wt = Worktree(path: "/wt/x", branch: "feature")
+        XCTAssertEqual(wt.sync, .unknown)
+        XCTAssertFalse(wt.isPrimary)
+    }
+
+    func testIsSafeToCleanOnlyWhenMergedCleanAndNotPrimary() {
+        func wt(_ sync: SyncStatus, dirty: Bool = false, primary: Bool = false) -> Worktree {
+            Worktree(path: "/wt/x", branch: "b", isDirty: dirty, sync: sync, isPrimary: primary)
+        }
+        XCTAssertTrue(wt(.merged).isSafeToClean)
+        XCTAssertFalse(wt(.merged, dirty: true).isSafeToClean)   // uncommitted work
+        XCTAssertFalse(wt(.merged, primary: true).isSafeToClean) // base worktree
+        XCTAssertFalse(wt(.ahead(2)).isSafeToClean)              // not merged
+        XCTAssertFalse(wt(.unknown).isSafeToClean)
+    }
+
+    // MARK: mergeStatus
+
+    /// Branch fully contained in origin/<base> → merged. Uses origin ref.
+    func testMergeStatusMergedUsesOriginBase() {
+        let fake = FakeProcessRunner()
+        fake.results = [
+            ProcessResult(exitCode: 0, stdout: "abc\n", stderr: ""),   // rev-parse origin/main
+            ProcessResult(exitCode: 0, stdout: "", stderr: ""),        // merge-base --is-ancestor
+        ]
+        let status = GitService(runner: fake).mergeStatus(repoPath: "/repo", branch: "feature", base: "main")
+        XCTAssertEqual(status, .merged)
+        XCTAssertEqual(fake.calls[0].args,
+                       ["-C", "/repo", "rev-parse", "--verify", "--quiet", "origin/main"])
+        XCTAssertEqual(fake.calls[1].args,
+                       ["-C", "/repo", "merge-base", "--is-ancestor", "feature", "origin/main"])
+    }
+
+    func testMergeStatusAhead() {
+        let fake = FakeProcessRunner()
+        fake.results = [
+            ProcessResult(exitCode: 0, stdout: "abc\n", stderr: ""),   // rev-parse origin/main
+            ProcessResult(exitCode: 1, stdout: "", stderr: ""),        // merge-base: not ancestor
+            ProcessResult(exitCode: 0, stdout: "0\t3\n", stderr: ""),  // rev-list behind\tahead
+        ]
+        let status = GitService(runner: fake).mergeStatus(repoPath: "/repo", branch: "feature", base: "main")
+        XCTAssertEqual(status, .ahead(3))
+        XCTAssertEqual(fake.calls[2].args,
+                       ["-C", "/repo", "rev-list", "--left-right", "--count", "origin/main...feature"])
+    }
+
+    func testMergeStatusBehind() {
+        let fake = FakeProcessRunner()
+        fake.results = [
+            ProcessResult(exitCode: 0, stdout: "abc\n", stderr: ""),
+            ProcessResult(exitCode: 1, stdout: "", stderr: ""),
+            ProcessResult(exitCode: 0, stdout: "2\t0\n", stderr: ""),
+        ]
+        XCTAssertEqual(GitService(runner: fake).mergeStatus(repoPath: "/repo", branch: "feature", base: "main"),
+                       .behind(2))
+    }
+
+    func testMergeStatusDiverged() {
+        let fake = FakeProcessRunner()
+        fake.results = [
+            ProcessResult(exitCode: 0, stdout: "abc\n", stderr: ""),
+            ProcessResult(exitCode: 1, stdout: "", stderr: ""),
+            ProcessResult(exitCode: 0, stdout: "2\t3\n", stderr: ""),
+        ]
+        XCTAssertEqual(GitService(runner: fake).mergeStatus(repoPath: "/repo", branch: "feature", base: "main"),
+                       .diverged(ahead: 3, behind: 2))
+    }
+
+    func testMergeStatusEven() {
+        let fake = FakeProcessRunner()
+        fake.results = [
+            ProcessResult(exitCode: 0, stdout: "abc\n", stderr: ""),
+            ProcessResult(exitCode: 1, stdout: "", stderr: ""),
+            ProcessResult(exitCode: 0, stdout: "0\t0\n", stderr: ""),
+        ]
+        XCTAssertEqual(GitService(runner: fake).mergeStatus(repoPath: "/repo", branch: "feature", base: "main"),
+                       .even)
+    }
+
+    /// origin/<base> missing → falls back to local <base> ref.
+    func testMergeStatusFallsBackToLocalBase() {
+        let fake = FakeProcessRunner()
+        fake.results = [
+            ProcessResult(exitCode: 128, stdout: "", stderr: ""),   // rev-parse origin/main: missing
+            ProcessResult(exitCode: 0, stdout: "abc\n", stderr: ""), // rev-parse main: found
+            ProcessResult(exitCode: 0, stdout: "", stderr: ""),      // merge-base ancestor
+        ]
+        let status = GitService(runner: fake).mergeStatus(repoPath: "/repo", branch: "feature", base: "main")
+        XCTAssertEqual(status, .merged)
+        XCTAssertEqual(fake.calls[2].args,
+                       ["-C", "/repo", "merge-base", "--is-ancestor", "feature", "main"])
+    }
+
+    /// Neither origin/<base> nor local <base> resolves → unknown.
+    func testMergeStatusUnknownWhenBaseUnresolved() {
+        let fake = FakeProcessRunner()
+        fake.results = [
+            ProcessResult(exitCode: 128, stdout: "", stderr: ""),
+            ProcessResult(exitCode: 128, stdout: "", stderr: ""),
+        ]
+        XCTAssertEqual(GitService(runner: fake).mergeStatus(repoPath: "/repo", branch: "feature", base: "main"),
+                       .unknown)
     }
 }

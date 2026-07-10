@@ -65,4 +65,16 @@ final class ConfigStoreTests: XCTestCase {
         let config = try JSONDecoder().decode(Config.self, from: json)
         XCTAssertEqual(config.language, "tr")
     }
+
+    func testFavoriteReposDefaultsToEmptyWhenMissing() throws {
+        let json = #"{"scanRoots":["~/Dev"]}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertEqual(config.favoriteRepos, [])
+    }
+
+    func testFavoriteReposDecodesWhenPresent() throws {
+        let json = #"{"favoriteRepos":["example_repos/example-admin","example_repos/example-mobile"]}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertEqual(config.favoriteRepos, ["example_repos/example-admin", "example_repos/example-mobile"])
+    }
 }
