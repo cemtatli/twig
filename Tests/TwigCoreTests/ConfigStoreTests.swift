@@ -89,4 +89,14 @@ final class ConfigStoreTests: XCTestCase {
         let config = try JSONDecoder().decode(Config.self, from: json)
         XCTAssertEqual(config.collapsedSections, ["Dev", "★favorites"])
     }
+
+    func testRepoSettingsRoundTripsEnvAndSetup() throws {
+        let settings = RepoSettings(
+            type: "react", defaultBase: "main",
+            envRules: [EnvRule(file: ".env", key: "API_URL", value: "http://x")],
+            setupCommands: ["yarn build"], packageManager: "yarn")
+        let data = try JSONEncoder().encode(settings)
+        let decoded = try JSONDecoder().decode(RepoSettings.self, from: data)
+        XCTAssertEqual(decoded, settings)
+    }
 }
