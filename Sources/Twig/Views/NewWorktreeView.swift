@@ -114,12 +114,6 @@ struct NewWorktreeForm: View {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .strokeBorder(Theme.hairline, lineWidth: 1)
                     )
-                    if let err = state.lastError {
-                        Text(err)
-                            .font(Theme.mono(10))
-                            .foregroundStyle(Theme.danger)
-                            .lineLimit(4)
-                    }
                 }
 
                 // MARK: — Eylem butonları

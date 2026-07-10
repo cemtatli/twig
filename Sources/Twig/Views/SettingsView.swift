@@ -126,24 +126,19 @@ struct SettingsView: View {
 
                     Spacer().frame(height: 8)
 
-                    // MARK: — Paket yöneticisi
-                    Theme.sectionLabel(state.t(.packageManagerTitle))
+                    // MARK: — Defaults (tüm repolar; per-repo ⚙ ile override)
+                    Theme.sectionLabel(state.t(.defaultsTitle))
                     card {
-                        if state.repos.isEmpty {
-                            HStack {
-                                Text(state.t(.noReposFound))
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 15)
-                            .frame(minHeight: 52)
-                        } else {
-                            ForEach(Array(state.repos.enumerated()), id: \.element.id) { idx, repo in
-                                packageManagerRow(repo, isLast: idx == state.repos.count - 1)
-                            }
+                        VStack(alignment: .leading, spacing: 10) {
+                            Theme.sectionLabel(state.t(.cfgWorktreePath))
+                            DarkTextField(placeholder: "{group}/task/{type}-{taskName}",
+                                          text: defaultsBinding(\.worktreePath),
+                                          onSubmit: { state.saveConfig() })
+                            Theme.sectionLabel(state.t(.cfgBase))
+                            DarkTextField(placeholder: "main", text: defaultsBinding(\.defaultBase),
+                                          onSubmit: { state.saveConfig() })
                         }
+                        .padding(12)
                     }
                     infoRow(state.t(.packageManagerCaption))
 
@@ -235,10 +230,13 @@ struct SettingsView: View {
                 set: { state.config[keyPath: keyPath] = $0; state.saveConfig() })
     }
 
-    private func pmBinding(_ repo: Repo) -> Binding<String> {
-        Binding(get: { state.packageManager(for: repo)?.rawValue ?? "none" },
-                set: { state.setPackageManager(PackageManager(rawValue: $0), for: repo) })
+    /// Defaults alanı — set yalnız in-memory config'i yazar (yayınlanır);
+    /// dosyaya kayıt DarkTextField'ın onSubmit'inde (her tuşta değil).
+    private func defaultsBinding(_ kp: WritableKeyPath<Defaults, String>) -> Binding<String> {
+        Binding(get: { state.config.defaults[keyPath: kp] },
+                set: { state.config.defaults[keyPath: kp] = $0 })
     }
+
 
     private func options(_ current: String, _ presets: [String]) -> [String] {
         presets.contains(current) ? presets : [current] + presets
@@ -290,39 +288,6 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.borderless)
                 .help(state.t(.remove))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .frame(minHeight: 44)
-            if !isLast {
-                Rectangle()
-                    .fill(Theme.hairline)
-                    .frame(height: 1)
-                    .padding(.leading, 16)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func packageManagerRow(_ repo: Repo, isLast: Bool) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                IconTile(systemName: "folder.fill",
-                         color: TilePalette.color(at: state.repos.firstIndex(of: repo) ?? 0),
-                         side: 24)
-                Text(repo.name)
-                    .font(.system(size: 14))
-                Spacer(minLength: 12)
-                Picker("", selection: pmBinding(repo)) {
-                    Text(state.t(.pmNone)).tag("none")
-                    ForEach(PackageManager.allCases, id: \.self) { pm in
-                        Text(pm.label).tag(pm.rawValue)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .buttonStyle(.plain)
-                .accessibilityLabel(repo.name)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)

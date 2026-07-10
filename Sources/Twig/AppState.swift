@@ -9,7 +9,7 @@ final class AppState: ObservableObject {
     @Published var repos: [Repo] = []
     @Published var worktreesByRepo: [String: [Worktree]] = [:]
     @Published var log: [String] = []
-    @Published var lastError: String?
+    @Published var toasts: [Toast] = []
     @Published var isRefreshing = false
     @Published var newWorktreeRepoPath: String?   // repo to show in the New Worktree window
     @Published var sidebarCollapsed = false
@@ -26,12 +26,19 @@ final class AppState: ObservableObject {
         refresh()   // populate eagerly so the first menu open is instant
     }
 
+    private var refreshTask: Task<Void, Never>?
+
     func refresh() {
         // Scan + per-repo `git worktree list` run off the main thread so the
-        // menubar popup never freezes while many repos are inspected.
+        // menubar popup never freezes. Ardışık çağrılar coalesce edilir
+        // (~150ms); ağır per-worktree durum (isDirty/mergeStatus) burada değil,
+        // loadStatus(for:) ile yalnız seçili repo için lazy hesaplanır.
         let config = self.config
         isRefreshing = true
-        Task.detached { [weak self] in
+        refreshTask?.cancel()
+        refreshTask = Task.detached { [weak self] in
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            if Task.isCancelled { return }
             let scanned = RepoScanner().scan(roots: config.scanRoots,
                                              depth: config.scanDepth,
                                              manual: config.manualRepos)
@@ -43,17 +50,9 @@ final class AppState: ObservableObject {
                 let all = (try? git.worktrees(repoPath: repo.path)) ?? []
                 // Exclude the base repo's own checkout and any worktree whose
                 // directory no longer exists on disk.
-                let filtered = all.filter { $0.path != repo.path && fm.fileExists(atPath: $0.path) }
-                let base = config.repos["\(repo.group)/\(repo.name)"]?.defaultBase ?? config.defaults.defaultBase
-                map[repo.path] = filtered.map { wt in
-                    var wt = wt
-                    wt.isDirty = (try? git.isDirty(worktreePath: wt.path)) ?? false
-                    wt.isPrimary = (wt.branch == base)
-                    wt.sync = wt.isPrimary ? .unknown
-                        : git.mergeStatus(repoPath: repo.path, branch: wt.branch, base: base)
-                    return wt
-                }
+                map[repo.path] = all.filter { $0.path != repo.path && fm.fileExists(atPath: $0.path) }
             }
+            if Task.isCancelled { return }
             let ordered = AppState.applyOrder(scanned, order: config.repoOrder)
             await MainActor.run {
                 self?.repos = ordered
@@ -62,6 +61,45 @@ final class AppState: ObservableObject {
             }
         }
     }
+
+    /// Seçili repo için ağır per-worktree durumu (isDirty + mergeStatus +
+    /// isPrimary) lazily hesapla — tüm repolar için her refresh'te git
+    /// çalıştırmamak için. Repo seçilince/refresh'te çağrılır.
+    func loadStatus(for repo: Repo) {
+        let base = config.repos["\(repo.group)/\(repo.name)"]?.defaultBase ?? config.defaults.defaultBase
+        let path = repo.path
+        Task.detached { [weak self] in
+            guard let current = await self?.worktreesByRepo[path], !current.isEmpty else { return }
+            let git = GitService(runner: SystemProcessRunner())
+            let enriched = current.map { wt -> Worktree in
+                var wt = wt
+                wt.isDirty = (try? git.isDirty(worktreePath: wt.path)) ?? false
+                wt.isPrimary = (wt.branch == base)
+                wt.sync = wt.isPrimary ? .unknown
+                    : git.mergeStatus(repoPath: path, branch: wt.branch, base: base)
+                return wt
+            }
+            await MainActor.run { self?.worktreesByRepo[path] = enriched }
+        }
+    }
+
+    // MARK: — Toast
+
+    private var toastDismiss: Task<Void, Never>?
+
+    func toast(_ message: String, kind: ToastKind = .success) {
+        let t = Toast(message: message, kind: kind)
+        toasts = [t]   // tek toast — stack yok
+        toastDismiss?.cancel()
+        let secs: Double = kind == .error ? 4.0 : 2.5
+        toastDismiss = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(secs * 1_000_000_000))
+            if Task.isCancelled { return }
+            await MainActor.run { self?.toasts.removeAll { $0.id == t.id } }
+        }
+    }
+
+    func dismissToast(_ id: UUID) { toasts.removeAll { $0.id == id } }
 
     /// Order scanned repos by the saved `repoOrder`, then make the result
     /// group-contiguous so the flat array matches the sectioned display order
@@ -129,6 +167,19 @@ final class AppState: ObservableObject {
         return PackageManager(rawValue: raw)
     }
 
+    func repoSettings(for repo: Repo) -> RepoSettings {
+        config.repos["\(repo.group)/\(repo.name)"] ?? RepoSettings()
+    }
+
+    /// Sheet'ten gelen ayarları yaz. Boş alanlar zaten nil normalize edilmiş
+    /// gelir; tamamen boşsa anahtarı kaldır. saveConfig refresh tetikler.
+    func saveRepoSettings(_ settings: RepoSettings, for repo: Repo) {
+        let key = "\(repo.group)/\(repo.name)"
+        if settings == RepoSettings() { config.repos[key] = nil }
+        else { config.repos[key] = settings }
+        saveConfig()
+    }
+
     func setPackageManager(_ pm: PackageManager?, for repo: Repo) {
         let key = "\(repo.group)/\(repo.name)"
         var settings = config.repos[key] ?? RepoSettings()
@@ -139,7 +190,6 @@ final class AppState: ObservableObject {
 
     func createWorktree(_ req: WorktreeRequest) {
         log = []
-        lastError = nil
         let creator = WorktreeCreator(config: config, git: git,
                                       setup: SetupRunner(runner: runner))
         let pm = packageManager(for: req.repo)
@@ -159,11 +209,12 @@ final class AppState: ObservableObject {
                                                           path: wt.path,
                                                           startupCommand: pm.devCommand)
                     }
+                    self?.toast("\(req.taskName) \(self?.t(.toastCreated) ?? "")")
                     self?.refresh()
                 }
             } catch {
                 await MainActor.run {
-                    self?.lastError = "\(error)"
+                    self?.toast(friendlyMessage(error), kind: .error)
                     self?.refresh()
                 }
             }
@@ -174,8 +225,10 @@ final class AppState: ObservableObject {
         do {
             try git.removeWorktree(repoPath: repo.path, worktreePath: worktree.path, force: force)
             if deleteBranch { try? git.deleteBranch(repoPath: repo.path, branch: worktree.branch) }
+            let verb = force ? t(.toastForceRemoved) : t(.toastRemoved)
+            toast("\(worktree.branch) \(verb)")
             refresh()
-        } catch { lastError = "\(error)" }
+        } catch { toast(friendlyMessage(error), kind: .error) }
     }
 
     /// Worktree'ler ki merge edilmiş + temiz + primary değil — hepsini
@@ -186,6 +239,7 @@ final class AppState: ObservableObject {
             try? git.removeWorktree(repoPath: repo.path, worktreePath: wt.path)  // temiz → force yok
             try? git.deleteBranch(repoPath: repo.path, branch: wt.branch)
         }
+        if !safe.isEmpty { toast("\(safe.count) \(t(.toastCleaned))") }
         refresh()
     }
 
@@ -215,9 +269,11 @@ final class AppState: ObservableObject {
     /// mutasyonu ile sidebar'ı tazele (full refresh flicker'ı olmasın).
     func toggleFavorite(_ repo: Repo) {
         let key = "\(repo.group)/\(repo.name)"
-        if let i = config.favoriteRepos.firstIndex(of: key) { config.favoriteRepos.remove(at: i) }
-        else { config.favoriteRepos.append(key) }
+        let added: Bool
+        if let i = config.favoriteRepos.firstIndex(of: key) { config.favoriteRepos.remove(at: i); added = false }
+        else { config.favoriteRepos.append(key); added = true }
         try? store.save(config)
+        toast("\(repo.name) \(added ? t(.toastFavAdded) : t(.toastFavRemoved))", kind: .info)
     }
 
     /// Sidebar section katlama — favoriler için "★favorites", diğerleri grup adı.

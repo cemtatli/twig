@@ -30,6 +30,13 @@ public enum L10nKey: String, CaseIterable {
     case favoritesSection, addFavorite, removeFavorite
     case forceDelete, dirtyDeleteWarning, cleanMerged, pruneStale
     case syncMerged
+    // Toast fiil/son ekleri (isim/sayı önüne gelir)
+    case toastCreated, toastRemoved, toastForceRemoved, toastCleaned
+    case toastFavAdded, toastFavRemoved
+    // Repo config sheet
+    case repoConfigTitle, cfgType, cfgBase, cfgWorktreePath, cfgEnvRules
+    case cfgSetupCommands, cfgAddRule, cfgAddCommand, cfgFile, cfgKey, cfgValue
+    case cfgDone, defaultsTitle, repoConfigHelp
     // Add-source panel
     case addPanelPrompt, addPanelMessage
     // Shortcuts (Settings bölümü)
@@ -89,6 +96,15 @@ public enum L10n {
             .forceDelete: "Force delete", .dirtyDeleteWarning: "Uncommitted changes",
             .cleanMerged: "Clean merged", .pruneStale: "Prune stale entries",
             .syncMerged: "merged",
+            .toastCreated: "created", .toastRemoved: "deleted",
+            .toastForceRemoved: "force-deleted", .toastCleaned: "worktrees cleaned",
+            .toastFavAdded: "added to favorites", .toastFavRemoved: "removed from favorites",
+            .repoConfigTitle: "Repo Settings", .cfgType: "Type", .cfgBase: "Base branch",
+            .cfgWorktreePath: "Worktree path", .cfgEnvRules: "Env rules",
+            .cfgSetupCommands: "Setup commands", .cfgAddRule: "Add rule",
+            .cfgAddCommand: "Add command", .cfgFile: "file", .cfgKey: "key", .cfgValue: "value",
+            .cfgDone: "Done", .defaultsTitle: "Defaults (all repos)",
+            .repoConfigHelp: "Empty fields fall back to defaults.",
             .pmNone: "None", .remove: "Remove",
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
@@ -138,6 +154,15 @@ public enum L10n {
             .forceDelete: "Zorla sil", .dirtyDeleteWarning: "Kaydedilmemiş değişiklik",
             .cleanMerged: "Merged temizle", .pruneStale: "Stale kayıtları temizle",
             .syncMerged: "merged",
+            .toastCreated: "oluşturuldu", .toastRemoved: "silindi",
+            .toastForceRemoved: "zorla silindi", .toastCleaned: "worktree temizlendi",
+            .toastFavAdded: "favlara eklendi", .toastFavRemoved: "favlardan çıkarıldı",
+            .repoConfigTitle: "Repo Ayarları", .cfgType: "Tip", .cfgBase: "Base branch",
+            .cfgWorktreePath: "Worktree yolu", .cfgEnvRules: "Env kuralları",
+            .cfgSetupCommands: "Setup komutları", .cfgAddRule: "Kural ekle",
+            .cfgAddCommand: "Komut ekle", .cfgFile: "dosya", .cfgKey: "anahtar", .cfgValue: "değer",
+            .cfgDone: "Bitti", .defaultsTitle: "Defaults (tüm repolar)",
+            .repoConfigHelp: "Boş alanlar defaults'a düşer.",
             .pmNone: "Yok", .remove: "Kaldır",
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",

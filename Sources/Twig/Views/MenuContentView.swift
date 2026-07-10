@@ -11,6 +11,7 @@ struct MenuContentView: View {
     @State private var selectedRepoPath: String?
     @State private var confirmingRemovalPath: String?
     @State private var showCleanMergedConfirm = false
+    @State private var showConfigSheet = false
     @State private var hoveredPath: String?
     @State private var hoveredRepoPath: String?
     @FocusState private var navFocused: Bool
@@ -38,6 +39,7 @@ struct MenuContentView: View {
         .padding(10)
         .frame(width: 780, height: 560)
         .background(Theme.canvas)
+        .overlay(ToastOverlay())
         .preferredColorScheme(.dark)
         .tint(Theme.accent)
         .focusable()
@@ -48,6 +50,11 @@ struct MenuContentView: View {
         .onChange(of: pane) { _, new in if new != .newWorktree { navFocused = true } }
         .onChange(of: state.repos.count) { _, _ in
             if selectedRepoPath == nil { selectedRepoPath = state.repos.first?.path }
+        }
+        // Ağır per-worktree durumu yalnız seçili repo için lazy yükle.
+        .onChange(of: selectedRepoPath) { _, _ in if let r = selectedRepo { state.loadStatus(for: r) } }
+        .onChange(of: state.isRefreshing) { _, refreshing in
+            if !refreshing, let r = selectedRepo { state.loadStatus(for: r) }
         }
     }
 
@@ -306,6 +313,17 @@ struct MenuContentView: View {
                     .font(.system(size: 17, weight: .bold))
                     .lineLimit(1).truncationMode(.middle)
                 Spacer()
+                // Repo ayarları (env/setup/tip/base/path/PM) sheet'i.
+                Button { showConfigSheet = true } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 16, height: 16)
+                        .padding(.horizontal, 11).padding(.vertical, 7)
+                        .background(Color.white.opacity(0.08), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .help(state.t(.repoConfigTitle)).accessibilityLabel(state.t(.repoConfigTitle))
                 // Yenile — New kapsülüyle aynı boy/krom. Yenileme sırasında ok
                 // yerine AYNI çerçevede spinner: başlık yanına ayrı spinner
                 // koymak header'ı sıkıştırıp taşırıyordu.
@@ -359,12 +377,10 @@ struct MenuContentView: View {
                 }
                 Button(state.t(.cancel), role: .cancel) {}
             }
-
-            if let err = state.lastError {
-                Label(err, systemImage: "exclamationmark.triangle")
-                    .font(.caption).foregroundStyle(Theme.danger).lineLimit(2)
-                    .padding(.horizontal, 20).padding(.bottom, 10)
+            .sheet(isPresented: $showConfigSheet) {
+                RepoConfigSheet(repo: repo).environmentObject(state)
             }
+
             Rectangle().fill(Theme.hairline).frame(height: 1)
 
             let worktrees = state.worktreesByRepo[repo.path] ?? []
