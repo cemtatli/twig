@@ -285,6 +285,25 @@ final class AppState: ObservableObject {
         refresh()
     }
 
+    // MARK: — Onboarding
+
+    func completeOnboarding(editor: String, terminal: String) {
+        config.editorApp = editor
+        config.terminalApp = terminal
+        config.onboardingCompleted = true
+        saveConfig()
+    }
+
+    func skipOnboarding() {
+        config.onboardingCompleted = true
+        saveConfig()
+    }
+
+    func rerunOnboarding() {
+        config.onboardingCompleted = false
+        try? store.save(config)   // refresh gerekmez
+    }
+
     // MARK: — Favoriler
 
     func isFavorite(_ repo: Repo) -> Bool {

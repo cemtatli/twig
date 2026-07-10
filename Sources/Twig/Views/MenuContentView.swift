@@ -39,6 +39,7 @@ struct MenuContentView: View {
         .padding(10)
         .frame(width: 780, height: 560)
         .background(Theme.canvas)
+        .overlay { if !state.config.onboardingCompleted { OnboardingView() } }
         .overlay(ToastOverlay())
         .preferredColorScheme(.dark)
         .tint(Theme.accent)

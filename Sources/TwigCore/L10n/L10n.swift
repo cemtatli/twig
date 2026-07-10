@@ -38,6 +38,9 @@ public enum L10nKey: String, CaseIterable {
     case cfgSetupCommands, cfgAddRule, cfgAddCommand, cfgFile, cfgKey, cfgValue
     case cfgDone, defaultsTitle, repoConfigHelp, cfgInsert, cfgUnknownToken, cfgCustom
     case cfgDevPort, devOpenBrowser, devStop, devRunning, toastDevStopped
+    // Onboarding
+    case onbWelcomeTitle, onbWelcomeBody, onbRootsTitle, onbRootsBody, onbAppsTitle
+    case onbNext, onbBack, onbFinish, onbSkip, onbRerun
     // Add-source panel
     case addPanelPrompt, addPanelMessage
     // Shortcuts (Settings bölümü)
@@ -109,6 +112,13 @@ public enum L10n {
             .cfgInsert: "Insert:", .cfgUnknownToken: "Unknown token", .cfgCustom: "Custom\u{2026}",
             .cfgDevPort: "Dev port", .devOpenBrowser: "Open in browser", .devStop: "Stop dev server",
             .devRunning: "running", .toastDevStopped: "stopped",
+            .onbWelcomeTitle: "Welcome to Twig",
+            .onbWelcomeBody: "Create and manage git worktrees across your local repos. Let\u{2019}s set up a few things.",
+            .onbRootsTitle: "Where are your repos?",
+            .onbRootsBody: "Pick folders to scan for git repositories.",
+            .onbAppsTitle: "Editor & Terminal",
+            .onbNext: "Next", .onbBack: "Back", .onbFinish: "Finish", .onbSkip: "Skip",
+            .onbRerun: "Run onboarding again",
             .pmNone: "None", .remove: "Remove",
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
@@ -170,6 +180,13 @@ public enum L10n {
             .cfgInsert: "Ekle:", .cfgUnknownToken: "Bilinmeyen token", .cfgCustom: "Özel\u{2026}",
             .cfgDevPort: "Dev port", .devOpenBrowser: "Tarayıcıda aç", .devStop: "Dev server'ı durdur",
             .devRunning: "çalışıyor", .toastDevStopped: "durduruldu",
+            .onbWelcomeTitle: "Twig\u{2019}e hoş geldin",
+            .onbWelcomeBody: "Yerel repolarında git worktree oluştur ve yönet. Birkaç şeyi ayarlayalım.",
+            .onbRootsTitle: "Repoların nerede?",
+            .onbRootsBody: "Git repolarının taranacağı klasörleri seç.",
+            .onbAppsTitle: "Editör & Terminal",
+            .onbNext: "İleri", .onbBack: "Geri", .onbFinish: "Bitir", .onbSkip: "Atla",
+            .onbRerun: "Onboarding\u{2019}i tekrar çalıştır",
             .pmNone: "Yok", .remove: "Kaldır",
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",

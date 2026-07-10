@@ -90,6 +90,18 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertEqual(config.collapsedSections, ["Dev", "★favorites"])
     }
 
+    func testOnboardingCompletedDefaultsFalseWhenMissing() throws {
+        let json = #"{"scanRoots":["~/Dev"]}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertFalse(config.onboardingCompleted)
+    }
+
+    func testOnboardingCompletedDecodesWhenPresent() throws {
+        let json = #"{"onboardingCompleted":true}"#.data(using: .utf8)!
+        let config = try JSONDecoder().decode(Config.self, from: json)
+        XCTAssertTrue(config.onboardingCompleted)
+    }
+
     func testRepoSettingsRoundTripsEnvAndSetup() throws {
         let settings = RepoSettings(
             type: "react", defaultBase: "main",

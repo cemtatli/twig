@@ -74,6 +74,8 @@ public struct Config: Codable, Equatable {
     /// Sidebar'da katlanmış (collapsed) section anahtarları — grup adı ya da
     /// favoriler için "★favorites" sentinel'i.
     public var collapsedSections: [String]
+    /// İlk açılış onboarding sihirbazı tamamlandı/atlandı mı.
+    public var onboardingCompleted: Bool
     public var defaults: Defaults
 
     public init(scanRoots: [String], scanDepth: Int, manualRepos: [String],
@@ -81,20 +83,20 @@ public struct Config: Codable, Equatable {
                 terminalStartupCommand: String = "", language: String = "en",
                 repos: [String: RepoSettings], repoOrder: [String] = [],
                 favoriteRepos: [String] = [], collapsedSections: [String] = [],
-                defaults: Defaults) {
+                onboardingCompleted: Bool = false, defaults: Defaults) {
         self.scanRoots = scanRoots; self.scanDepth = scanDepth; self.manualRepos = manualRepos
         self.terminalApp = terminalApp; self.editorApp = editorApp
         self.terminalStartupCommand = terminalStartupCommand
         self.language = language
         self.repos = repos; self.repoOrder = repoOrder
         self.favoriteRepos = favoriteRepos; self.collapsedSections = collapsedSections
-        self.defaults = defaults
+        self.onboardingCompleted = onboardingCompleted; self.defaults = defaults
     }
 
     private enum CodingKeys: String, CodingKey {
         case scanRoots, scanDepth, manualRepos, terminalApp, editorApp
         case terminalStartupCommand, language, repos, repoOrder, favoriteRepos
-        case collapsedSections, defaults
+        case collapsedSections, onboardingCompleted, defaults
     }
 
     // Resilient decoding: a hand-edited or older config.json missing keys
@@ -113,6 +115,7 @@ public struct Config: Codable, Equatable {
         repoOrder = try c.decodeIfPresent([String].self, forKey: .repoOrder) ?? []
         favoriteRepos = try c.decodeIfPresent([String].self, forKey: .favoriteRepos) ?? []
         collapsedSections = try c.decodeIfPresent([String].self, forKey: .collapsedSections) ?? []
+        onboardingCompleted = try c.decodeIfPresent(Bool.self, forKey: .onboardingCompleted) ?? false
         defaults = try c.decodeIfPresent(Defaults.self, forKey: .defaults) ?? d.defaults
     }
 

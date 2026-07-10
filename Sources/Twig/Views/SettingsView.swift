@@ -177,6 +177,15 @@ struct SettingsView: View {
                         .padding(.horizontal, 6)
                     }
 
+                    Spacer().frame(height: 8)
+                    Button(action: { state.rerunOnboarding() }) {
+                        Label(state.t(.onbRerun), systemImage: "sparkles")
+                            .font(.system(size: 12.5, weight: .medium))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 6)
+
                     Spacer().frame(height: 16)
                 }
                 .padding(.horizontal, 20)
