@@ -165,12 +165,22 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         infoRow(state.t(.startupCommandCaption))
                         infoRow(state.t(.editConfigHint))
-                        Text(ConfigStore.defaultPath.abbreviatingHome)
-                            .font(.system(size: 11.5))
-                            .foregroundStyle(.tertiary)
-                            .textSelection(.enabled)
-                            .padding(.leading, 21)   // info ikonu hizası
-                            .padding(.horizontal, 6)
+                        HStack(spacing: 8) {
+                            Text(ConfigStore.defaultPath.abbreviatingHome)
+                                .font(.system(size: 11.5))
+                                .foregroundStyle(.tertiary)
+                                .textSelection(.enabled)
+                            Spacer(minLength: 8)
+                            Button(action: { state.openConfigFile() }) {
+                                Label(state.t(.openConfigButton),
+                                      systemImage: "square.and.pencil")
+                                    .font(.system(size: 11.5, weight: .medium))
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Theme.accent)
+                        }
+                        .padding(.leading, 21)   // info ikonu hizası
+                        .padding(.horizontal, 6)
                     }
 
                     Spacer().frame(height: 16)

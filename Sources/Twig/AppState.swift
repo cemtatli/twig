@@ -215,5 +215,9 @@ final class AppState: ObservableObject {
     }
     func openFinder(_ path: String) { try? launcher.openInFinder(path: path) }
 
+    /// config.json'ı seçili editörde aç (env/komut kurallarını elle düzenlemek
+    /// için). Editör CLI'si dosyayı doğrudan açar; yoksa `open -a` fallback.
+    func openConfigFile() { try? launcher.openInEditor(config.editorApp, path: ConfigStore.defaultPath) }
+
     func saveConfig() { try? store.save(config); refresh() }
 }

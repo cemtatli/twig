@@ -50,8 +50,13 @@ public struct Launcher {
             try open(["-a", terminalApp, path])
             return
         }
+        // .zshrc'yi source et: kullanıcının alias/fonksiyon/PATH tanımları
+        // (ör. `ccd`) yüklensin — non-interactive shell aksi halde rc okumaz,
+        // "command not found" verir. Source çalışıp alias'ı tanımladıktan sonra
+        // sonraki satır parse edildiği için alias genişletmesi de çalışır.
         let script = """
         #!/bin/zsh
+        source "${ZDOTDIR:-$HOME}/.zshrc" 2>/dev/null
         cd \(Self.shellQuote(path))
         \(command)
         exec zsh -i

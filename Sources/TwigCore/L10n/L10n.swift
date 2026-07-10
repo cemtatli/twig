@@ -25,6 +25,7 @@ public enum L10nKey: String, CaseIterable {
     case editorTitle, editorCaption, packageManagerTitle, packageManagerCaption
     case noReposFound, startupCommandTitle, startupCommandCaption, startupPlaceholder
     case editConfigHint, pmNone, remove, languageTitle, languageCaption
+    case openConfigButton
     // Add-source panel
     case addPanelPrompt, addPanelMessage
     // Shortcuts (Settings bölümü)
@@ -78,6 +79,7 @@ public enum L10n {
             .startupCommandCaption: "Runs in the worktree when the terminal opens (optional). Save with Enter.",
             .startupPlaceholder: "e.g. npm run dev",
             .editConfigHint: "Edit config.json by hand for env/command rules:",
+            .openConfigButton: "Open config.json",
             .pmNone: "None", .remove: "Remove",
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
@@ -121,6 +123,7 @@ public enum L10n {
             .startupCommandCaption: "Terminal açılınca worktree\u{2019}de çalışır (opsiyonel). Enter ile kaydet.",
             .startupPlaceholder: "ör. npm run dev",
             .editConfigHint: "Env/komut kuralları için config.json\u{2019}ı elle düzenle:",
+            .openConfigButton: "config.json\u{2019}ı aç",
             .pmNone: "Yok", .remove: "Kaldır",
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",

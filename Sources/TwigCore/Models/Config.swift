@@ -4,7 +4,9 @@ import Foundation
 /// creation and the dev command auto-started in a terminal afterwards.
 public enum PackageManager: String, Codable, CaseIterable {
     case yarn, npm
-    public var installCommand: String { self == .yarn ? "yarn install" : "npm install" }
+    // npm alır `--legacy-peer-deps`: peer-dep (ERESOLVE) çakışmaları worktree
+    // oluşturmayı patlatmasın diye. yarn'da böyle bir bayrak yok.
+    public var installCommand: String { self == .yarn ? "yarn install" : "npm install --legacy-peer-deps" }
     public var devCommand: String { self == .yarn ? "yarn dev" : "npm run dev" }
     public var label: String { self == .yarn ? "Yarn" : "npm" }
 }
