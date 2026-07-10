@@ -126,6 +126,19 @@ struct SettingsView: View {
 
                     Spacer().frame(height: 8)
 
+                    // MARK: — Açılışta başlat
+                    card {
+                        SettingsRow(title: state.t(.launchAtLoginTitle),
+                                    subtitle: state.t(.launchAtLoginCaption),
+                                    showsHairline: false) {
+                            TwigToggle(isOn: Binding(
+                                get: { LoginItem.isEnabled },
+                                set: { LoginItem.setEnabled($0) }))
+                        }
+                    }
+
+                    Spacer().frame(height: 8)
+
                     // MARK: — Defaults (tüm repolar; per-repo ⚙ ile override)
                     Theme.sectionLabel(state.t(.defaultsTitle))
                     card {

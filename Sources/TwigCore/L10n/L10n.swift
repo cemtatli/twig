@@ -41,6 +41,7 @@ public enum L10nKey: String, CaseIterable {
     // Onboarding
     case onbWelcomeTitle, onbWelcomeBody, onbRootsTitle, onbRootsBody, onbAppsTitle
     case onbNext, onbBack, onbFinish, onbSkip, onbRerun
+    case launchAtLoginTitle, launchAtLoginCaption
     // Add-source panel
     case addPanelPrompt, addPanelMessage
     // Shortcuts (Settings bölümü)
@@ -119,6 +120,8 @@ public enum L10n {
             .onbAppsTitle: "Editor & Terminal",
             .onbNext: "Next", .onbBack: "Back", .onbFinish: "Finish", .onbSkip: "Skip",
             .onbRerun: "Run onboarding again",
+            .launchAtLoginTitle: "Launch at login",
+            .launchAtLoginCaption: "Start Twig automatically when you log in.",
             .pmNone: "None", .remove: "Remove",
             .languageTitle: "Language", .languageCaption: "Interface language",
             .addPanelPrompt: "Add",
@@ -187,6 +190,8 @@ public enum L10n {
             .onbAppsTitle: "Editör & Terminal",
             .onbNext: "İleri", .onbBack: "Geri", .onbFinish: "Bitir", .onbSkip: "Atla",
             .onbRerun: "Onboarding\u{2019}i tekrar çalıştır",
+            .launchAtLoginTitle: "Açılışta başlat",
+            .launchAtLoginCaption: "Oturum açınca Twig otomatik başlasın.",
             .pmNone: "Yok", .remove: "Kaldır",
             .languageTitle: "Dil", .languageCaption: "Arayüz dili",
             .addPanelPrompt: "Ekle",
