@@ -73,6 +73,16 @@ public struct GitService {
         return r.exitCode == 0
     }
 
+    /// Pushes a branch to origin and sets upstream (`git push -u origin <branch>`).
+    /// Non-fatal: returns false when there is no remote or the push fails (e.g.
+    /// offline), so creation can proceed. `stderr` carries the reason for logging.
+    @discardableResult
+    public func push(repoPath: String, branch: String) -> (ok: Bool, stderr: String) {
+        guard let r = try? runner.run("git", ["-C", repoPath, "push", "-u", "origin", branch], cwd: nil)
+        else { return (false, "git push failed to run") }
+        return (r.exitCode == 0, r.stderr)
+    }
+
     /// True if a ref (e.g. `origin/master`) resolves in the repo.
     public func hasRef(repoPath: String, ref: String) -> Bool {
         guard let r = try? runner.run("git", ["-C", repoPath, "rev-parse", "--verify", "--quiet", ref], cwd: nil)

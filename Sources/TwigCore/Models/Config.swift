@@ -31,13 +31,18 @@ public struct RepoSettings: Codable, Equatable {
     public var packageManager: String?
     /// Dev server portu — çalışıyor tespiti + tarayıcıda aç/durdur için. nil → pasif.
     public var devPort: Int?
+    /// Worktree oluşturulunca yeni branch'i `git push -u origin` ile remote'a it.
+    /// nil → varsayılan davranış (açık). Kapatmak için açıkça `false`.
+    public var pushOnCreate: Bool?
 
     public init(type: String? = nil, worktreePath: String? = nil, defaultBase: String? = nil,
                 envRules: [EnvRule]? = nil, setupCommands: [String]? = nil,
-                packageManager: String? = nil, devPort: Int? = nil) {
+                packageManager: String? = nil, devPort: Int? = nil,
+                pushOnCreate: Bool? = nil) {
         self.type = type; self.worktreePath = worktreePath; self.defaultBase = defaultBase
         self.envRules = envRules; self.setupCommands = setupCommands
         self.packageManager = packageManager; self.devPort = devPort
+        self.pushOnCreate = pushOnCreate
     }
 }
 

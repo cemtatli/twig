@@ -38,6 +38,7 @@ public enum L10nKey: String, CaseIterable {
     case cfgSetupCommands, cfgAddRule, cfgAddCommand, cfgFile, cfgKey, cfgValue
     case cfgDone, defaultsTitle, repoConfigHelp, cfgInsert, cfgUnknownToken, cfgCustom
     case cfgDevPort, devOpenBrowser, devStop, devRunning, toastDevStopped
+    case cfgPushOnCreate, cfgPushOnCreateCaption
     // Onboarding
     case onbWelcomeTitle, onbWelcomeBody, onbRootsTitle, onbRootsBody, onbAppsTitle
     case onbNext, onbBack, onbFinish, onbSkip, onbRerun
@@ -113,6 +114,8 @@ public enum L10n {
             .cfgInsert: "Insert:", .cfgUnknownToken: "Unknown token", .cfgCustom: "Custom\u{2026}",
             .cfgDevPort: "Dev port", .devOpenBrowser: "Open in browser", .devStop: "Stop dev server",
             .devRunning: "running", .toastDevStopped: "stopped",
+            .cfgPushOnCreate: "Push branch on create",
+            .cfgPushOnCreateCaption: "Push the new branch to origin so it appears on the remote.",
             .onbWelcomeTitle: "Welcome to Twig",
             .onbWelcomeBody: "Create and manage git worktrees across your local repos. Let\u{2019}s set up a few things.",
             .onbRootsTitle: "Where are your repos?",
@@ -183,6 +186,8 @@ public enum L10n {
             .cfgInsert: "Ekle:", .cfgUnknownToken: "Bilinmeyen token", .cfgCustom: "Özel\u{2026}",
             .cfgDevPort: "Dev port", .devOpenBrowser: "Tarayıcıda aç", .devStop: "Dev server'ı durdur",
             .devRunning: "çalışıyor", .toastDevStopped: "durduruldu",
+            .cfgPushOnCreate: "Oluşturunca branch'i push et",
+            .cfgPushOnCreateCaption: "Yeni branch'i origin'e push eder, remote'da görünür olsun.",
             .onbWelcomeTitle: "Twig\u{2019}e hoş geldin",
             .onbWelcomeBody: "Yerel repolarında git worktree oluştur ve yönet. Birkaç şeyi ayarlayalım.",
             .onbRootsTitle: "Repoların nerede?",

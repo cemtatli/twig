@@ -13,6 +13,7 @@ struct RepoConfigSheet: View {
     @State private var worktreePath: String = ""
     @State private var pm: String?               // nil / "npm" / "yarn"
     @State private var devPort: String = ""
+    @State private var pushOnCreate: Bool = true
     @State private var envRules: [EnvRule] = []
     @State private var setupCommands: [String] = []
 
@@ -35,6 +36,8 @@ struct RepoConfigSheet: View {
                     packageManagerPicker
 
                     field(state.t(.cfgDevPort), text: $devPort, placeholder: "3000")
+
+                    pushToggle
 
                     envSection
                     setupSection
@@ -102,6 +105,19 @@ struct RepoConfigSheet: View {
             .background(selected ? Theme.accent : Color.white.opacity(0.06), in: Capsule())
     }
 
+    private var pushToggle: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(state.t(.cfgPushOnCreate)).font(.system(size: 14))
+                Text(state.t(.cfgPushOnCreateCaption))
+                    .font(.system(size: 12)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 12)
+            TwigToggle(isOn: $pushOnCreate)
+        }
+    }
+
     // MARK: env rules
 
     private var envSection: some View {
@@ -167,6 +183,7 @@ struct RepoConfigSheet: View {
         worktreePath = s.worktreePath ?? ""
         pm = s.packageManager
         devPort = s.devPort.map(String.init) ?? ""
+        pushOnCreate = s.pushOnCreate ?? true
         envRules = s.envRules ?? []
         setupCommands = s.setupCommands ?? []
     }
@@ -186,7 +203,9 @@ struct RepoConfigSheet: View {
             envRules: cleanEnv.isEmpty ? nil : cleanEnv,
             setupCommands: cleanSetup.isEmpty ? nil : cleanSetup,
             packageManager: pm,
-            devPort: Int(devPort.trimmingCharacters(in: .whitespaces)))
+            devPort: Int(devPort.trimmingCharacters(in: .whitespaces)),
+            // Varsayılan (açık) → nil sakla ki tümü boşsa anahtar temizlensin.
+            pushOnCreate: pushOnCreate ? nil : false)
         state.saveRepoSettings(settings, for: repo)
     }
 }

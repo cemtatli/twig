@@ -64,6 +64,18 @@ public struct WorktreeCreator {
                             branch: req.branch, newBranchBase: base)
 
         let repoSettings = settings(for: req.repo)
+        // Push the branch to origin so it shows up on the remote right away.
+        // Repo-specific setting wins; unset (nil) means the default — enabled.
+        // Non-fatal: offline / no remote just logs and continues.
+        if repoSettings?.pushOnCreate ?? true {
+            progress("git push -u origin \(req.branch)")
+            let result = git.push(repoPath: req.repo.path, branch: req.branch)
+            if !result.ok {
+                let reason = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+                progress("push failed (skipped): \(reason.isEmpty ? "no remote / offline" : reason)")
+            }
+        }
+
         // Repo-specific rules win; otherwise fall back to the global defaults.
         let rules = repoSettings?.envRules ?? config.defaults.envRules ?? []
         if !rules.isEmpty {

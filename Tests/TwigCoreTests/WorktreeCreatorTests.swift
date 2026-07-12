@@ -16,7 +16,7 @@ final class WorktreeCreatorTests: XCTestCase {
     }
 
     private func studentRequest() -> WorktreeRequest {
-        let repo = Repo(path: "/Users/example/Dev/example_repos/example-student",
+        let repo = Repo(path: "/tmp/twig-user/Dev/example_repos/example-student",
                         name: "example-student", group: "example_repos")
         return WorktreeRequest(repo: repo, branch: "randevu", taskName: "randevu", newBranchBase: nil)
     }
@@ -26,7 +26,7 @@ final class WorktreeCreatorTests: XCTestCase {
                                       git: GitService(runner: FakeProcessRunner()),
                                       setup: SetupRunner(runner: FakeProcessRunner()))
         let path = try creator.resolvedPath(for: studentRequest())
-        XCTAssertEqual(path, "/Users/example/Dev/example_repos/task/student-randevu")
+        XCTAssertEqual(path, "/tmp/twig-user/Dev/example_repos/task/student-randevu")
     }
 
     func testDerivesTypeWhenNotConfigured() throws {
@@ -35,10 +35,10 @@ final class WorktreeCreatorTests: XCTestCase {
         let creator = WorktreeCreator(config: config,
                                       git: GitService(runner: FakeProcessRunner()),
                                       setup: SetupRunner(runner: FakeProcessRunner()))
-        let repo = Repo(path: "/Users/example/Dev/example_repos/example-admin", name: "example-admin", group: "example_repos")
+        let repo = Repo(path: "/tmp/twig-user/Dev/example_repos/example-admin", name: "example-admin", group: "example_repos")
         let req = WorktreeRequest(repo: repo, branch: "x", taskName: "x", newBranchBase: nil)
         XCTAssertEqual(try creator.resolvedPath(for: req),
-                       "/Users/example/Dev/example_repos/task/admin/x")
+                       "/tmp/twig-user/Dev/example_repos/task/admin/x")
     }
 
     func testCreateCallsGitThenSetupInOrder() throws {
@@ -49,7 +49,7 @@ final class WorktreeCreatorTests: XCTestCase {
                                       setup: SetupRunner(runner: setupFake))
 
         // Create the worktree directory for env rules file write
-        let wtPath = "/Users/example/Dev/example_repos/task/student-randevu"
+        let wtPath = "/tmp/twig-user/Dev/example_repos/task/student-randevu"
         try FileManager.default.createDirectory(atPath: wtPath, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(atPath: wtPath) }
 
@@ -58,8 +58,8 @@ final class WorktreeCreatorTests: XCTestCase {
         XCTAssertEqual(wt, Worktree(path: wtPath, branch: "randevu"))
         // git worktree add çağrıldı
         XCTAssertEqual(gitFake.calls.first?.args,
-                       ["-C", "/Users/example/Dev/example_repos/example-student", "worktree", "add",
-                        "/Users/example/Dev/example_repos/task/student-randevu", "randevu"])
+                       ["-C", "/tmp/twig-user/Dev/example_repos/example-student", "worktree", "add",
+                        "/tmp/twig-user/Dev/example_repos/task/student-randevu", "randevu"])
         // setupCommands sh ile çalıştı
         XCTAssertEqual(setupFake.calls.first?.executable, "sh")
         XCTAssertEqual(setupFake.calls.first?.args, ["-c", "npm install"])
@@ -70,10 +70,10 @@ final class WorktreeCreatorTests: XCTestCase {
         config.defaults.envRules = [EnvRule(file: ".env.development", key: "VITE_API_URL",
                                             value: "https://{type}-{taskName}.dev.example.com/api")]
         // Repo NOT in config.repos -> type derived from name, defaults apply.
-        let repo = Repo(path: "/Users/example/Dev/example_repos/example-ekurs", name: "example-ekurs", group: "example_repos")
+        let repo = Repo(path: "/tmp/twig-user/Dev/example_repos/example-ekurs", name: "example-ekurs", group: "example_repos")
         let req = WorktreeRequest(repo: repo, branch: "x", taskName: "demo", newBranchBase: nil)
 
-        let wtPath = "/Users/example/Dev/example_repos/task/ekurs-demo"
+        let wtPath = "/tmp/twig-user/Dev/example_repos/task/ekurs-demo"
         try FileManager.default.createDirectory(atPath: wtPath, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(atPath: wtPath) }
 
@@ -84,6 +84,42 @@ final class WorktreeCreatorTests: XCTestCase {
 
         let written = try String(contentsOfFile: wtPath + "/.env.development", encoding: .utf8)
         XCTAssertEqual(written, "VITE_API_URL=https://ekurs-demo.dev.example.com/api\n")
+    }
+
+    func testCreatePushesBranchByDefault() throws {
+        let gitFake = FakeProcessRunner()
+        let creator = WorktreeCreator(config: makeConfig(),
+                                      git: GitService(runner: gitFake),
+                                      setup: SetupRunner(runner: FakeProcessRunner()))
+
+        let wtPath = "/tmp/twig-user/Dev/example_repos/task/student-randevu"
+        try FileManager.default.createDirectory(atPath: wtPath, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(atPath: wtPath) }
+
+        _ = try creator.create(studentRequest(), progress: { _ in })
+
+        // pushOnCreate unset (nil) → default açık → git push -u origin çağrıldı.
+        XCTAssertTrue(gitFake.calls.contains {
+            $0.args == ["-C", "/tmp/twig-user/Dev/example_repos/example-student",
+                        "push", "-u", "origin", "randevu"]
+        })
+    }
+
+    func testCreateSkipsPushWhenDisabled() throws {
+        var config = makeConfig()
+        config.repos["example_repos/example-student"]?.pushOnCreate = false
+        let gitFake = FakeProcessRunner()
+        let creator = WorktreeCreator(config: config,
+                                      git: GitService(runner: gitFake),
+                                      setup: SetupRunner(runner: FakeProcessRunner()))
+
+        let wtPath = "/tmp/twig-user/Dev/example_repos/task/student-randevu"
+        try FileManager.default.createDirectory(atPath: wtPath, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(atPath: wtPath) }
+
+        _ = try creator.create(studentRequest(), progress: { _ in })
+
+        XCTAssertFalse(gitFake.calls.contains { $0.args.contains("push") })
     }
 
     func testCreateHaltsWhenGitFails() {
