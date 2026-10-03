@@ -20,10 +20,18 @@ No external Swift dependencies.
 
 ## Install
 
+Download the **DMG or ZIP** from [GitHub Releases](https://github.com/cemtatli/twig/releases/latest). Both packages are universal: **Apple Silicon and Intel**, macOS 14 or later. Open the DMG and drag **Twig** to **Applications**, or extract the ZIP and move **Twig.app** there. You do not need Xcode or Swift to run the downloaded app.
+
+Releases are currently **ad-hoc signed, not Developer ID signed or notarized**. macOS may block the first launch. If you trust this repository and have checked the download, attempt to open Twig and then follow [Apple's first-launch instructions](https://support.apple.com/en-us/102445) under **System Settings → Privacy & Security → Open Anyway**. Do not disable Gatekeeper globally.
+
+SHA-256 checksums are attached to each release.
+
+### Build from source
+
 Build the double-clickable `.app` bundle and drop it in `/Applications`:
 
 ```bash
-git clone <your-fork-url> twig
+git clone https://github.com/cemtatli/twig.git
 cd twig
 ./scripts/build-app.sh --install
 ```
@@ -31,9 +39,7 @@ cd twig
 Then launch **Twig** from Spotlight or Launchpad — a small mark appears in your
 menu bar. Click it to open the panel.
 
-The bundle is **ad-hoc signed**, so on first launch macOS Gatekeeper may block
-it. Right-click the app → **Open**, or allow it under **System Settings →
-Privacy & Security**.
+The locally built bundle is also ad-hoc signed.
 
 Prefer to run it without installing?
 
@@ -131,6 +137,7 @@ swift build                              # debug build
 swift test                               # run the test suite (TwigCore)
 swift run Twig                           # run from the terminal
 ./scripts/build-app.sh                   # build Twig.app in the project root
+./scripts/package-release.sh 1.0.0       # universal .app, DMG, ZIP and checksums in dist/v1.0.0
 ```
 
 ### Architecture
