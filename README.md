@@ -154,5 +154,4 @@ Production shells out via `SystemProcessRunner`; tests inject a
 
 ## License
 
-_No license chosen yet._ Add a `LICENSE` file (e.g. MIT) before publishing —
-without one, the code is "all rights reserved" by default.
+[MIT](LICENSE)
